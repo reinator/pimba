@@ -176,4 +176,4 @@ phylum_barplots.svg
 class_barplots.svg
 order_barplots.svg
 family_barplots.svg
-genus_barplots.svg   
+genus_barplots.svg
