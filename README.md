@@ -16,10 +16,10 @@ Please, place all your forward and reverse reads in one directory and make sure 
 ~~~
 ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt>
 ~~~
-<rawdata_dir> = path with all the R1 and R2 reads file;
-<output_reads> = name for the output file;
-<num_threads> = number of threads;
-<adapters.txt> = tab separated 2-column file with all adapters and primers used for sequencing.
+<rawdata_dir> = path with all the R1 and R2 reads file;\
+<output_reads> = name for the output file;\
+<num_threads> = number of threads;\
+<adapters.txt> = tab separated 2-column file with all adapters and primers used for sequencing.\
 
 Example:
 ~~~
