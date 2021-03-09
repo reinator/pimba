@@ -120,7 +120,7 @@ tar -xzvf new_taxdump.tar.gz
 
 If you want to use a personalized database,it is only needed a fasta file with the reference sequences and their identification, and a two-column tax.txt file with the sequence ID and the full taxonomy written for every reference sequence in the fasta file. Put them at the same directory, e.g: /path/to/your/database/.
 Example of FASTA file:
-![](https://raw.githubusercontent.com/reinator/pimba/main/Figures/fasta_example.png?token=ABL6UANQWCHHZPZVGAU7CODAI65ES)
+![](https://github.com/reinator/pimba/blob/main/Figures/fasta_example.png?raw=true)
 
 Example of Taxonomy file:
 ![](https://raw.githubusercontent.com/reinator/pimba/main/Figures/tax_example.png?token=ABL6UAOL2IJ7UEHIKHKNQ63AI65KM)
