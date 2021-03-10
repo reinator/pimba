@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SILVA_DB_16S=/bio/share_bio/databases/Silva_132_release/SILVA_132_QIIME_release/
+GG_DB_16S=/bio/share_bio/databases/gg_13_5_otus/
+RDP_DB_16S=/bio/share_bio/databases/RDP/
+NCBI_DB_EXP=/bio/share_bio/databases/NCBI/blast_nt/
+TAXDUMP=/bio/share_bio/utils/renato/taxdump/
+ITS_UNITE_DB=/bio/share_bio/databases/its_fungi/sh_refs_qiime_ver8.2/
+COI_BOLD_DB=/bio/share_bio/databases/metabarcoding_db/COI_BOLD/coi_bold
+
+
+#Set the variables for the databases that you wish to use on PIMBA
+#SILVA_DB_16S = Path to the main folder of Silva 16S Database.
+#GG_DB_16S = Path to the main folder of Greengenes 16S Database.
+#RDP_DB_16S = Path to the main folder of the RDP 16S Database.
+#NCBI_DB = Path to the NCBI database.
+#NCBI_DB_EXP = Path to the main folder of the NCBI Database.
+#ITS_UNITE_DB = Path to the main folder of the UNITE Database.
+#ITS_BIOBASE_DB = Path to the main folder of the BIOBASE ITS Database
+#COI_BIOBASE_DB = Path to the main folder of the BIOBASE COI Database
+#COI_BOLD_DB = Path to the main folder of the BOLD COI Database
+#COI_ALL_DB = Path to the main folder of the BIOBASE COI + BOLD COI Databases
