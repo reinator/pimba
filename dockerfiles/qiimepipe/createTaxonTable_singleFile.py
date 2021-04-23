@@ -8,6 +8,12 @@ def createDicTaxdump(taxdump):
                 line = line.split("\t|\t")
                 dicTaxdump[line[0]]=line[8]+";"+line[7]+";"+line[6]+";"+line[5]+";"+line[4]+";"+line[3]+";"+line[1]
         dicTaxdump['0']="NA"
+
+        merged = open("/taxdump/merged.dmp", "r")
+        lines = merged.readlines()
+        for line in lines:
+        	line = line.split("\t")
+        	dicTaxdump[line[0]] = dicTaxdump[line[2]]
 	
 		# dicTaxdump['1649555'] = dicTaxdump['1333996']
   #       dicTaxdump['1649555'] = dicTaxdump['1333996']

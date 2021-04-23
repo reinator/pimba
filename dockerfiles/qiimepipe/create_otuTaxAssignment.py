@@ -9,6 +9,12 @@ def createDicTaxdump(taxdump):
                 dicTaxdump[line[0]]=line[8]+";"+line[7]+";"+line[6]+";"+line[5]+";"+line[4]+";"+line[3]+";"+line[1]
         dicTaxdump['0']="NA"
 
+        merged = open("/taxdump/merged.dmp", "r")
+        lines = merged.readlines()
+        for line in lines:
+        	line = line.split("\t")
+        	dicTaxdump[line[0]] = dicTaxdump[line[2]]
+
         return dicTaxdump
 
 def createDicBlast(blastTable):
@@ -113,7 +119,7 @@ def normalize(dicTaxon):
 
 	return dicTaxonNormal
 
-taxdump = open("/bio/share_bio/utils/renato/taxdump/rankedlineage.dmp","r")
+taxdump = open("/taxdump/rankedlineage.dmp","r")
 dicTaxdump = createDicTaxdump(taxdump)
 
 blastTable = open(sys.argv[1], "r")	
