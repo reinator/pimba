@@ -26,6 +26,8 @@ library(grid)
 library(reshape2)
 library(gridExtra)
 library(xfun)
+library(pvclust)
+library(dendextend) 
 
 ###Creating a phyloseq obj###
 
@@ -451,7 +453,7 @@ dev.off()
 
 
 ###Clustering analysis
-library(vegan)
+
 
 groupby = args[4]
 
@@ -467,8 +469,7 @@ dev.off()
 
 
 
-library(pvclust)
-library(dendextend) 
+
 
 taxon_matrix <- otu_table(ps)
 taxon_matrix  <- as.matrix(taxon_matrix)

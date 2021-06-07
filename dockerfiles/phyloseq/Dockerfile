@@ -18,6 +18,8 @@ RUN Rscript -e "install.packages('dplyr')"
 RUN Rscript -e "install.packages('grid')"
 RUN Rscript -e "install.packages('gridExtra')"
 RUN Rscript -e "install.packages('xfun')"
+RUN Rscript -e "install.packages('pvclust')"
+RUN Rscript -e "install.packages('dendextend')"
 
 WORKDIR /data/
 
