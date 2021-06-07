@@ -47,20 +47,23 @@ while getopts "t:a:m:g:" opt; do
 	esac
 done
 
+DIR_TAX=$(dirname $TAX_ASSIGNMENT)
+FILE_TAX=$(basename $TAX_ASSIGNMENT)
+cp $TAX_ASSIGNMENT ${DIR_TAX}/plot_${FILE_TAX}
+PLOT_TAX=${DIR_TAX}/plot_${FILE_TAX}
 
-cp $TAX_ASSIGNMENT plot_${TAX_ASSIGNMENT}
 chmod +x $OTU_TABLE $TAX_ASSIGNMENT $METADATA
 
-sed -i '1s/^/otu_id\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\tsimilarity\n/' plot_$TAX_ASSIGNMENT
-sed -i -e 's/;/\t/g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/k__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ p__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ c__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ o__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ f__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ g__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/ s__//g' plot_$TAX_ASSIGNMENT
-sed -i -e 's/Unassigned/Unassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned/g' plot_$TAX_ASSIGNMENT
+sed -i '1s/^/otu_id\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\tsimilarity\n/' $PLOT_TAX
+sed -i -e 's/;/\t/g' $PLOT_TAX
+sed -i -e 's/k__//g' $PLOT_TAX
+sed -i -e 's/ p__//g' $PLOT_TAX
+sed -i -e 's/ c__//g' $PLOT_TAX
+sed -i -e 's/ o__//g' $PLOT_TAX
+sed -i -e 's/ f__//g' $PLOT_TAX
+sed -i -e 's/ g__//g' $PLOT_TAX
+sed -i -e 's/ s__//g' $PLOT_TAX
+sed -i -e 's/Unassigned/Unassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned/g' $PLOT_TAX
 
 
 CURRENT_PATH=$(pwd)
@@ -81,6 +84,10 @@ cd $CURRENT_PATH
 
 COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
+OTU_TABLE=$(echo ${FULL_PATH_OTU#"$COMMON_PATH"})/$(basename $OTU_TABLE)
+PLOT_TAX=$(echo ${FULL_PATH_TAX#"$COMMON_PATH"})/$(basename $PLOT_TAX)
+METADATA=$(echo ${FULL_PATH_META#"$COMMON_PATH"})/$(basename $METADATA)
+
 
 mkdir plots
 chmod -R 777 plots
@@ -91,10 +98,10 @@ docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name phylose
 
 echo "Running the Phyloseq Container: "
 docker exec -i phyloseq /bin/bash -c 'cd /output/plots; \
-	Rscript /data/Phyloseq_pimba.R ../'${OTU_TABLE}' ../plot_'${TAX_ASSIGNMENT}' ../'${METADATA}' '$GROUPBY'; \
+	Rscript /data/Phyloseq_pimba.R /common/'${OTU_TABLE}' /common/'${PLOT_TAX}' /common/'${METADATA}' '$GROUPBY'; \
 	chmod -R 777 /output/plots;'
 
 #Rscript ${SCRIPT_PATH}/Phyloseq_pimba.R ../${OTU_TABLE} ../plot_${TAX_ASSIGNMENT} ../${METADATA} $GROUPBY
 
 docker stop phyloseq
-docker rm phyloseq;
+docker rm phyloseq
