@@ -73,103 +73,8 @@ taxa_names(OTU)
 sample_names(OTU)
 sample_names(META)
 
-# Create color range (https://htmlcolorcodes.com/color-picker/) for multiple colors 
+groupby = args[4]
 
-# col <- c(
-#   "#7FC97F","#BEAED4","#FDC086","#FFFF99","#386CB0","#F0027F","#BF5B17","#666666","#1B9E77","#D95F02","#7570B3","#E7298A","#66A61E","#E6AB02",
-#   "#A6761D","#666666","#A6CEE3","#1F78B4", "#B2DF8A","#33A02C","#FB9A99","#E31A1C","#FDBF6F","#FF7F00","#CAB2D6","#6A3D9A","#FFFF99","#B15928",
-#   "#FBB4AE","#B3CDE3","#CCEBC5","#DECBE4","#FED9A6","#FFFFCC","#E5D8BD","#FDDAEC","#F2F2F2","#B3E2CD","#FDCDAC","#CBD5E8","#F4CAE4","#E6F5C9",
-#   "#FFF2AE","#F1E2CC","#CCCCCC","#E41A1C","#377EB8","#4DAF4A","#984EA3","#FF7F00","#FFFF33","#A65628","#F781BF","#999999","#CCEBC5","#FFED6F",
-#   "#66C2A5","#FC8D62","#8DA0CB","#E78AC3","#A6D854","#FFD92F","#E5C494","#B3B3B3","#8DD3C7","#FFFFB3","#BEBADA","#FB8072","#80B1D3","#FDB462",
-#   "#CBD588", "#5F7FC7", "orange","#DA5724", "#508578", "#CD9BCD", "#AD6F3B", "#673770","#D14285", "#652926", "#C84248", "#B3DE69","#FCCDE5",
-#   "#8569D5", "#5E738F","#D1A33D", "#8A7C64", "#87D3CB", "#599861", "#F3A392", "#72A04A", "#70CB1F", "#38CDBE","#D9D9D9","#BC80BD",
-#   "#878CD3", "#2E3589", "#9C89BC", "#3498DB", "#A867C9", "#D362E8", "#F1C40F", "#CF51A1", "#B8358A", "#9A5A84", 
-#   "#B899AD", "#B83548", "#B8999D", "#9A5A64", "#B86335", "#B8A499", "#9A705A", "#B8A535", "#9A905A", "#B8B399", "#ADB899", "#9DB899"
-# )
-# 
-# cl <- colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
-# cl <- cl[grep('\\whitesmoke\\b', cl, invert = T)]
-# cl <- cl[grep('\\black\\b', cl, invert = T)]
-# cl <- cl[grep('\\white\\b', cl, invert = T)]
-# cl <- cl[grep('\\aliceblue\\b', cl, invert = T)]
-# cl <- cl[grep('1', cl, invert = T)]
-# cl <- cl[grep('2', cl, invert = T)]
-# cl <- cl[grep('3', cl, invert = T)]
-# cl <- cl[grep('azure', cl, invert = T)]
-# cl <- cl[grep('bisque', cl, invert = T)]
-# cl <- cl[grep('\\cadetblue3\\b', cl, invert = T)]
-# cl <- cl[grep('cornsilk', cl, invert = T)]
-# cl <- cl[grep('darkseagreen', cl, invert = T)]
-# cl <- cl[grep('forestgreen', cl, invert = T)]
-# cl <- cl[grep('honeydew', cl, invert = T)]
-# cl <- cl[grep('hotpink', cl, invert = T)]
-# cl <- cl[grep('ivory', cl, invert = T)]
-# cl <- cl[grep('indianred', cl, invert = T)]
-# cl <- cl[grep('lavender', cl, invert = T)]
-# cl <- cl[grep('lemonchiffon', cl, invert = T)]
-# cl <- cl[grep('lightblue', cl, invert = T)]
-# cl <- cl[grep('lightgreen', cl, invert = T)]
-# cl <- cl[grep('lightyellow', cl, invert = T)]
-# cl <- cl[grep('lightgoldenrod', cl, invert = T)]
-# cl <- cl[grep('lightcyan', cl, invert = T)]
-# cl <- cl[grep('lightsteelblue', cl, invert = T)]
-# cl <- cl[grep('\\linen\\b', cl, invert = T)]
-# cl <- cl[grep('maroon', cl, invert = T)]
-# cl <- cl[grep('mediumaquamarin', cl, invert = T)]
-# cl <- cl[grep('mediumorchid', cl, invert = T)]
-# cl <- cl[grep('mediumpurple', cl, invert = T)]
-# cl <- cl[grep('mediumslateblue', cl, invert = T)]
-# cl <- cl[grep('\\slateblue3\\b', cl, invert = T)]
-# cl <- cl[grep('\\mintcream\\b', cl, invert = T)]
-# cl <- cl[grep('mistyrose', cl, invert = T)]
-# cl <- cl[grep('\\oldlace\\b', cl, invert = T)]
-# cl <- cl[grep('papaya', cl, invert = T)]
-# cl <- cl[grep('paleturquoise', cl, invert = T)]
-# cl <- cl[grep('peachpuff', cl, invert = T)]
-# cl <- cl[grep('plum', cl, invert = T)]
-# cl <- cl[grep('\\rosybrown\\b', cl, invert = T)]
-# cl <- cl[grep('seashell', cl, invert = T)]
-# cl <- cl[grep('sienna', cl, invert = T)]
-# cl <- cl[grep('snow', cl, invert = T)]
-# cl <- cl[grep('wheat', cl, invert = T)]
-
-# cl <- colors()[grep('gr(a|e)y', grDevices::colors(), invert = T)]
-# cl <- cl[grep('black', cl, invert = T)]
-# cl <- cl[grep('white', cl, invert = T)]
-# palette = c("yellow", "blue", "red", "cyan", "green",  "magenta")
-# max_dist=1
-# while(max_dist>0.08){
-#   palette_min = c()
-#   palette_min_dist=c()
-#   cl = setdiff(cl, palette)
-#   
-#   for (i in 1:length(cl)){
-#     min_dist= 1
-#     col1 = t(col2rgb(cl[i]))
-#     for(j in 1:length(palette)){
-#       col2 =  t(col2rgb(palette[j]))
-#       d=sqrt((col2[1]-col1[1])^2+(col2[2]-col1[2])^2+(col2[3]-col1[3])^2)
-#       p=d/sqrt((255)^2+(255)^2+(255)^2)
-#       if(p <= min_dist){
-#         min_dist = p
-#       }
-#     }
-#     palette_min = c(palette_min, cl[i])
-#     palette_min_dist = c(palette_min_dist, min_dist)
-#     
-#   }
-#   
-#   max_dist = 0
-#   max_i = 0
-#   for(k in 1:length(palette_min)){
-#     if(palette_min_dist[k] > max_dist){
-#       max_dist = palette_min_dist[k]
-#       new_color = palette_min[k]
-#     }
-#   }
-#   palette = c(palette, new_color)
-#   cl = setdiff(cl, new_color)
-# }
 cl = c("yellow","blue","red","cyan","green",
        "magenta","snow","mistyrose4","darkgreen","cyan4",
        "royalblue1","darkorange4","palegreen1","chocolate1","hotpink1",
@@ -242,6 +147,11 @@ p = ggplot(ps_phylum, aes(x = Sample, y = Abundance, fill = phylum)) +
   scale_fill_manual(values = palette) + theme(axis.text.x = element_text(angle = 30, hjust = 1, size=11))+
   theme(legend.text=element_text(size=rel(1.2))) + ggtitle("Phylum barplot")
 
+if(groupby!=FALSE){
+  groupby=paste("~",groupby)
+  p = p + facet_grid(groupby, scale="free")
+}
+
 svg("phylum_barplots.svg", width = 15, height = 8)
 print(p)
 dev.off()
@@ -286,6 +196,11 @@ p = ggplot(ps_class, aes(x = Sample, y = Abundance, fill = class)) +
   scale_fill_manual(values = palette) + theme(axis.text.x = element_text(angle = 30, hjust = 1, size=11))+
   theme(legend.text=element_text(size=rel(1.2)))+
   theme (strip.text = element_text(size = 12)) + ggtitle("Class barplot")
+
+if(groupby!=FALSE){
+  #groupby=paste("~",groupby)
+  p = p + facet_grid(groupby, scale="free")
+}
 
 svg("class_barplots.svg", width = 15, height = 8)
 print(p)
@@ -332,6 +247,11 @@ p = ggplot(ps_order, aes(x = Sample, y = Abundance, fill = order)) +
   theme(legend.text=element_text(size=rel(1.2)))+
   theme (strip.text = element_text(size = 12)) + ggtitle("Order barplot")
 
+if(groupby!=FALSE){
+  #groupby=paste("~",groupby)
+  p = p + facet_grid(groupby, scale="free")
+}
+
 svg("order_barplots.svg", width = 15, height = 8)
 print(p)
 dev.off()
@@ -376,6 +296,11 @@ p = ggplot(ps_family, aes(x = Sample, y = Abundance, fill = family)) +
   scale_fill_manual(values = palette) +  theme(axis.text.x = element_text(angle = 30, hjust = 1, size=11))+
   theme(legend.text=element_text(size=rel(1.2)))+
   theme (strip.text = element_text(size = 12)) + ggtitle("Family barplot")
+
+if(groupby!=FALSE){
+  #groupby=paste("~",groupby)
+  p = p + facet_grid(groupby, scale="free")
+}
 
 svg("family_barplots.svg", width = 15, height = 8)
 print(p)
@@ -422,6 +347,11 @@ p = ggplot(ps_genus, aes(x = Sample, y = Abundance, fill = genus)) +
   theme (strip.text = element_text(size = 12)) + ggtitle("Genus barplot")
 
 
+if(groupby!=FALSE){
+  #groupby=paste("~",groupby)
+  p = p + facet_grid(groupby, scale="free")
+}
+
 svg("genus_barplots.svg", width = 15, height = 8)
 print(p)
 dev.off()
@@ -454,7 +384,6 @@ dev.off()
 
 ###Clustering analysis
 
-
 groupby = args[4]
 
 hell.tip.labels <- as(get_variable(ps, groupby), "character")
@@ -462,6 +391,19 @@ hell.tip.labels <- as(get_variable(ps, groupby), "character")
 d <- phyloseq::distance(ps, method="bray", type="samples")
 hell.hclust     <- hclust(d, method="average")
 svg("cluster_dendogram.svg", width = 15, height = 8)
+
+if(groupby!=FALSE){
+  order=hell.hclust$order
+  hell.tip.labels <- as(get_variable(ps, groupby), "character")
+  labels(hell.hclust) <- paste(hell.tip.labels[order], sample_names(META)[order], sep="-")
+}
+
+# dend <- as.dendrogram(hell.hclust)
+# 
+# dend %>%
+#   set("leaves_pch", as.numeric(hell.tip.labels[order])) %>%
+#   plot()
+
 p = plot(hell.hclust)
 
 
@@ -480,6 +422,18 @@ result <- pvclust(as.matrix(taxon_matrix),
                   method.hclust="ward.D2", nboot=1000)
 
 svg("cluster_bootstrap1000.svg", width = 15, height = 8)
+
+if(groupby!=FALSE){
+  order=result$hclust$order
+  hell.tip.labels <- as(get_variable(ps, groupby), "character")
+  labels(result$hclust) <-paste(hell.tip.labels[order], sample_names(META)[order], sep="-")
+}
+
+
+
+
+
+
 p = plot(result,
      main="Cluster analysis. Bootstrap = 1000"
 ) + pvrect(result, alpha=0.95, border = 2, lwd= 1, xpd = TRUE)
@@ -492,10 +446,17 @@ wunifrac_dist = phyloseq::distance(ps, method="unifrac", weighted=F)
 ordination = ordinate(ps, method="PCoA", distance=wunifrac_dist)
 
 svg("PCoA_unifrac.svg", width = 15, height = 8)
-plot_ordination(ps, ordination, color=groupby, label="SampleName") + 
-  theme(aspect.ratio=1) +  scale_colour_manual(values=palette) +
-  ggtitle("PCoA with unweighted UniFrac distance")
 
+if(groupby!=FALSE){
+  sample_data(ps)[,groupby] <- sapply(sample_data(ps)[,groupby], as.factor)
+  plot_ordination(ps, ordination, color=groupby, label="SampleName") + 
+    theme(aspect.ratio=1) +  scale_colour_manual(values=palette) +
+    ggtitle("PCoA with unweighted UniFrac distance")
+} else{
+  plot_ordination(ps, ordination, label="SampleName") + 
+    theme(aspect.ratio=1) +  scale_colour_manual(values=palette) +
+    ggtitle("PCoA with unweighted UniFrac distance")
+}
 
 dev.off()
 
@@ -504,10 +465,16 @@ dev.off()
 ps.ord <- ordinate(ps, "NMDS", "bray")
 
 svg("NMDS_bray.svg", width = 15, height = 8)
-plot_ordination(ps, ps.ord, type="sample", color=groupby, 
-                title="OTUs", label="SampleName") + geom_point(size=2) +
-  scale_colour_manual(values=palette) +  ggtitle("NMDS with Bray-Curtis distance")
-
+if(groupby!=FALSE){
+  sample_data(ps)[,groupby] <- sapply(sample_data(ps)[,groupby], as.factor)
+  plot_ordination(ps, ps.ord, type="sample", color=groupby, 
+                  title="OTUs", label="SampleName") + geom_point(size=2) +
+    scale_colour_manual(values=palette) +  ggtitle("NMDS with Bray-Curtis distance")
+}else{
+  plot_ordination(ps, ps.ord, type="sample",
+                  title="OTUs", label="SampleName") + geom_point(size=2) +
+    scale_colour_manual(values=palette) +  ggtitle("NMDS with Bray-Curtis distance")
+}
 
 dev.off()
 
