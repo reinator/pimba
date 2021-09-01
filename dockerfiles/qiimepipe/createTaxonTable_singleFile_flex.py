@@ -11,33 +11,44 @@ def createDicTaxAssignId(taxAssignId):
 	return dicTaxAssignId
 
 def is_uncultered(organism):
-	if(organism != "uncultured bacterium" and organism!= "uncultured organism" and organism != "unidentified microorganism" and organism != "bacterium" and organism != "organism" and organism.count("uncultured")==0 and organism.count("unidentified")==0):
+	#if(organism != "uncultured bacterium" and organism!= "uncultured organism" and organism != "unidentified microorganism" and organism != "bacterium" and organism != "organism" and organism.count("uncultured")==0 and organism.count("unidentified")==0):
+	if(organism.count("Uncultured")==0 and organism.count("Unidentified")==0 and organism.count("uncultured")==0 and organism.count("unidentified")==0):
 		return False
 
 	return True
 
 def check_majority(organism_list, identity_list, taxid_list):
+
+	#print(taxid_list)
 	max_vote = 0
 	max_i = 0
 	for i in range(len(taxid_list)):
 		taxid = taxid_list[i]
 		vote = taxid_list.count(taxid)
-		if(vote>max_vote and not is_uncultered(organism_list[i]) ):
+		if(vote>max_vote):
 			max_vote = vote
 			max_i = i
 
+	#print(max_i)
 	return organism_list[max_i], identity_list[max_i], taxid_list[max_i]
 
 def check_uncultered(organism_list, identity_list, taxid_list):
 	max_vote = 0
 	max_i = 0
+	new_organism_list = []
+	new_identity_list = []
+	new_taxid_list = []
 	for i in range(len(taxid_list)):
 		if(not is_uncultered(organism_list[i])):
-			max_i = i
-			break
+			new_organism_list.append(organism_list[i])
+			new_identity_list.append(identity_list[i])
+			new_taxid_list.append(taxid_list[i])
 
-	return organism_list[max_i], identity_list[max_i], taxid_list[max_i]
-
+	if (len(new_organism_list) > 0):
+		return new_organism_list, new_identity_list, new_taxid_list
+	else:
+		return organism_list, identity_list, taxid_list
+		
 def createDicBlast(blastTable):
 	dicBlast = dict()
 	lines = blastTable.readlines()
@@ -46,24 +57,39 @@ def createDicBlast(blastTable):
 	while(i < len(lines)):
 		line = lines[i]
 		line = line.split("\t")
+		line[3]=line[3].split(";")
 		otuid = line[0]
 		if(otuid.find("gb|") != -1):
 			otuid = otuid[3:-1]
 		organism_list = [line[4]]
 		identity_list = [line[5]]
-		taxid_list = [line[2]]
+		taxid_list = [line[3][0]]
 		if(i+1!=len(lines)):
-			while(lines[i+1].split("\t")[0] == otuid):
+			new_otuid = lines[i+1].split("\t")[0]
+			if(new_otuid.find("gb|") != -1):
+				new_otuid = new_otuid[3:-1]
+			while(new_otuid == otuid):
 				i+=1
+				
+
 				line = lines[i]
 				line = line.split("\t")
-				organism_list.append(line[1])
+				line[3]=line[3].split(";")
+				organism_list.append(line[4]) #changing to get the description rather than organism name, because blastn is now remote and no organism name is returned
 				identity_list.append(line[5])
-				taxid_list.append(line[2])
-				if(i+1==len(lines)): break
+				taxid_list.append(line[3][0])
+				if(i+1==len(lines)): 
+					break
+				else:
+					new_otuid = lines[i+1].split("\t")[0]
+					if(new_otuid.find("gb|") != -1):
+						new_otuid = new_otuid[3:-1]
 			
-		#dicBlast[otuid] = check_majority(organism_list, identity_list, taxid_list)
-		dicBlast[otuid] = check_uncultered(organism_list, identity_list, taxid_list)
+		#print("taxid com uncultured", taxid_list)
+		organism_list, identity_list, taxid_list = check_uncultered(organism_list, identity_list, taxid_list)
+		#print("taxid sem uncultured", taxid_list)
+		dicBlast[otuid] = check_majority(organism_list, identity_list, taxid_list)
+		#dicBlast[otuid] = check_uncultered(organism_list, identity_list, taxid_list)
 		#dicBlast[line[0]]=line[2][0],line[3]
 		#dicBlast[line[0]]=line[1],line[5],line[3][0] # OTUId = organism_list, identity_list, TaxID
 		i+=1

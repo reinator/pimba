@@ -34,16 +34,18 @@ def writeFasta(otuFile, filter_list,filterText):
 				if(i+1>=num_lines): 
 					i+=1 
 					break
-                                else: i+=1
+				else: 
+					i+=1
 		elif(lines[i][0]==">" and lines[i][1:-1] not in filter_list.keys()):
 			filteredKeepTxt+=lines[i]
-                        i+=1
-                        while(lines[i][0]!=">"):
-                                filteredKeepTxt+=lines[i]
-                               	if(i+1>=num_lines): 
+			i+=1
+			while(lines[i][0]!=">"):
+				filteredKeepTxt+=lines[i]
+				if(i+1>=num_lines): 
 					i+=1
 					break
-				else: i+=1
+				else: 
+					i+=1
 	filteredKeepFile = open(sys.argv[1].strip(".fasta")+"s_filtered.fasta","w")
 	filteredKeepFile.write(filteredKeepTxt)
 	

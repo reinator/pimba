@@ -8,7 +8,7 @@ RUN set -e \
       && apt-get -y update \
       && apt-get -y dist-upgrade \
       && apt-get -y install --no-install-recommends --no-install-suggests \
-        python3.6-minimal python3-pip\
+        python3.9-minimal python3-pip\
       && apt-get -y autoremove \
       && apt-get clean \
       && rm -rf /var/lib/apt/lists/*

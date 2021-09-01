@@ -87,7 +87,7 @@ def createFinalOutput(tableOutput):
 	for line in lines:
 		line = line.split("\t")
 		#print(line)
-		if(not dicTaxon.has_key(line[2])):
+		if(line[2] not in dicTaxon):
 			i=1
 			dicTaxon[line[2]]=int(line[1])
 			if(line[3]=="NA"):
@@ -119,7 +119,7 @@ def normalize(dicTaxon):
 
 	return dicTaxonNormal
 
-taxdump = open("/taxdump/rankedlineage.dmp","r")
+taxdump = open("/taxdump/rankedlineage.dmp","r", encoding="utf-8")
 dicTaxdump = createDicTaxdump(taxdump)
 
 blastTable = open(sys.argv[1], "r")	
@@ -146,11 +146,11 @@ for s in sample_ids:
 	outtxt = "OTUID\tread_count\ttaxon\tsimilarity%\ttaxonomy\n"
 	for k in dicOtuKeys:
 
-		if(dic.has_key(k) and dicBlast.has_key(k)):
+		if(k in dic and k in dicBlast):
 			if(dic[k]!="0"):
 				outtxt+=k+"\t"+dic[k]+"\t"+dicBlast[k][0]+"\t"+str(dicBlast[k][1])+"\t"+dicTaxdump[str(dicBlast[k][2])]+"\n"
 
-		elif(dic.has_key(k) and not dicBlast.has_key(k)):
+		elif(k in dic and  k not in dicBlast):
 			if(dic[k]!="0"):
 				outtxt+=k+"\t"+dic[k]+"\tUNASSIGNED\tNA\tUNASSIGNED\n"
 			if(k not in unassigned_otu):

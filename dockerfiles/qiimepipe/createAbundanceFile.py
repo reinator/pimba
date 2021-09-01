@@ -62,7 +62,7 @@ def createFinalOutput(tableOutput):
 	for line in lines:
 		line = line.split("\t")
 		#print(line)
-		if(not dicTaxon.has_key(line[2])):
+		if(line[2] not in dicTaxon):
 			i=1
 			dicTaxon[line[2]]=int(line[1])
 			if(line[3]=="NA"):
@@ -121,14 +121,14 @@ for s in sample_ids:
 	outtxt = "OTUID\tread_count\ttaxon\tsimilarity%\ttaxonomy\n"
 	for k in dicOtuKeys:
 
-		if(dic.has_key(k) and dicTaxAssign.has_key(k)):
+		if(k in dic and  k in dicTaxAssign):
 			if(dic[k]!="0"):
 				taxon = dicTaxAssign[k][0].split(";")
 				while (taxon[-1] == ""):
 					taxon.pop(-1)
 				outtxt+=k+"\t"+dic[k]+"\t"+taxon[-1]+"\t"+str(dicTaxAssign[k][1])+"\t"+dicTaxon[k]+"\n"
 
-		elif(dic.has_key(k) and not dicTaxAssign.has_key(k)):
+		elif(k in dic and k not in dicTaxAssign):
 			if(dic[k]!="0"):
 				outtxt+=k+"\t"+dic[k]+"\tUNASSIGNED\tNA\tUNASSIGNED\n"
 			if(k not in unassigned_otu):
