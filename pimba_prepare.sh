@@ -22,14 +22,17 @@
 ###    renato.renison@gmail.com
 
 #!/bin/bash
-#usage: ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt>
+#usage: ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt> <min_length> <min_phred>
 #<rawdata_dir> = path with all the R1 and R2 reads file;
 #<output_reads> = name for the output file;
 #<num_threads> = number of threads;
-#<adapters.txt> = txt list file with all adapters and primers used for sequencing
+#<adapters.txt> = txt list file with all adapters and primers used for sequencing;
+#<min_lenght> = The minimum lenght of the read after quality treatment;
+#<min_phred> = Minimum PHRED score of a read after quality treatment;
+
 
 #####################################################################################################################################
-#or usage: ./pimba_prepare.sh iontorrent-dualindex  <rawdata.fastq> <barcodes.txt> <barcodes_reverse.txt> <barcodes.fasta> <barcodes_for_dir> <Primer_forward> <Primer_reverse> <num_threads> <output_name>
+#or usage: ./pimba_prepare.sh iontorrent-dualindex  <rawdata.fastq> <barcodes.txt> <barcodes_reverse.txt> <barcodes.fasta> <barcodes_for_dir> <Primer_forward> <Primer_reverse> <num_threads> <output_name> <min_length> <min_phred>
 #<rawdata.fastq> = single file with all the reads to demultiplex;
 #<barcodes.txt> = barcodes used as index in the 3' of the fragment;
 #<barcodes_reverse.txt> = reverse complement of <barcodes.txt>;
@@ -39,9 +42,11 @@
 #<Primer_reverse> = sequence of the reverse primer;
 #<num_threads> = number of threads;
 #<output_name> = name for the output fastq file;
+#<min_lenght> = The minimum lenght of the read after quality treatment;
+#<min_phred> = Minimum PHRED score of a read after quality treatment;
 
 #####################################################################################################################################
-#or usage: ./pimba_prepare.sh iontorrent-singleindex <rawdata.fastq> <prefix> <barcodes.txt> <barcodes.fasta> <primer> <num_threads> <output_name>
+#or usage: ./pimba_prepare.sh iontorrent-singleindex <rawdata.fastq> <prefix> <barcodes.txt> <barcodes.fasta> <primer> <num_threads> <output_name> <min_length> <min_phred>
 #<rawdata.fastq> = single file with all the reads to demultiplex;
 #<prefix> = name that will precede the barcodes names;
 #<barcodes.txt> = barcodes used as index in the 5' of the fragment;
@@ -49,7 +54,11 @@
 #<primer> = primer sequence;
 #<num_threads> = number of threads;
 #<output_name> = name for the output fastq file;
+#<min_lenght> = The minimum lenght of the read after quality treatment;
+#<min_phred> = Minimum PHRED score of a read after quality treatment;
+
 CURRENT_PATH=$(pwd)
+TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 
 if [ $1 = "illumina" ];
 then
@@ -58,6 +67,8 @@ then
 	OUTPUTNAME=$3
 	NUM_THREADS=$4
 	ADAPTERS=$5
+	MINLENGTH=$6
+	MINPHRED=$7
 
 	DIR_NAME_RAW=$(dirname $RAWDATADIR)
 	cd $DIR_NAME_RAW
@@ -71,37 +82,41 @@ then
 
 	COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
+	echo Common Path: $COMMON_PATH
+	echo Current Path: $CURRENT_PATH
+
+
 	mkdir prepare_output
 	cd prepare_output
 	mkdir R1; mkdir R2;
 
 	cd R1
-	ln -s ../../${RAWDATADIR}/*R1* .
+	ln -s ../../${RAWDATADIR}/*_R1* .
 	cd ../R2
-	ln -s ../../${RAWDATADIR}/*R2* .
+	ln -s ../../${RAWDATADIR}/*_R2* .
 
 	cd ../../
 	chmod -R 777 prepare_output
 
 	#Removing adapters and filtering sequences by quality
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/adapter_removal/ -v $CURRENT_PATH:/output/ --name adapter_removal itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $COMMON_PATH:/adapter_removal/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
-	docker exec -i adapter_removal  /bin/bash -c 'ADAPTERS='$ADAPTERS'; FULL_PATH_ADAP='$FULL_PATH_ADAP'; COMMON_PATH='$COMMON_PATH'; cd /output/prepare_output/;\
+	docker exec -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'ADAPTERS='$ADAPTERS'; FULL_PATH_ADAP='$FULL_PATH_ADAP'; COMMON_PATH='$COMMON_PATH'; cd /output/prepare_output/;\
 	 for i in R1/*.fastq; do newfile=${i%%_*}; newfile=${newfile##*/}; echo $newfile;\
 	 AdapterRemoval --file1 $i --file2 R2/${newfile}* --threads '$NUM_THREADS' --mate-separator " " --adapter-list /adapter_removal/$(echo ${FULL_PATH_ADAP#"$COMMON_PATH"})/$(basename $ADAPTERS) \
-	  --trimwindows 10 --minquality 20 --minlength 50 --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
+	  --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
 	  chmod -R 777 /output/prepare_output/;'
 
     mkdir -p assemblies/pear
     cd assemblies/pear
 
     echo "Creating a PEAR Container: "
-	docker run -id -v $COMMON_PATH:/pear/ -v $CURRENT_PATH:/output/ --name pear itvdsbioinfo/pimba_pear:v0.9.10
+	docker run -id -v $COMMON_PATH:/pear/ -v $CURRENT_PATH:/output/ --name pear_prepare_$TIMESTAMP itvdsbioinfo/pimba_pear:v0.9.10
 
 	echo "Running the PEAR Container: "
-	docker exec -i pear  /bin/bash -c 'cd /output/assemblies/pear/;\
+	docker exec -i pear_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/assemblies/pear/;\
 	 for i in ../../prepare_output/*good.pair1.truncated; do newfile=$(basename $i _good.pair1.truncated);echo $newfile; \
 	 mkdir $newfile; pear -j '$NUM_THREADS' -f $i -r ../../prepare_output/${newfile}_good.pair2.truncated -o ${newfile}/${newfile}; done;\
 	 for i in */*assembled.fastq; do newfile=$(basename $i .assembled.fastq); echo $newfile;  sed -i "s/ /_/g" $i; done;\
@@ -111,10 +126,10 @@ then
 	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${i} -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled; done;
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
-	docker exec -i qiimepipe /bin/bash -c 'cd /output/assemblies/pear/;\
+	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
 	for i in *.fasta; do newfile=$(basename $i .assembled.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
 	chmod -R 777 /output/assemblies/'
 
@@ -125,14 +140,14 @@ then
 	chmod 777 ../../${OUTPUTNAME}.fasta
 
 	echo "Stopping Containeres: "
-	docker stop adapter_removal
-	docker stop pear
-	docker stop qiimepipe
+	docker stop adapter_removal_prepare_$TIMESTAMP
+	docker stop pear_prepare_$TIMESTAMP
+	docker stop qiimepipe_prepare_$TIMESTAMP
 
 	echo "Removing Containeres: "
-	docker rm adapter_removal
-	docker rm pear
-	docker rm qiimepipe
+	docker rm adapter_removal_prepare_$TIMESTAMP
+	docker rm pear_prepare_$TIMESTAMP
+	docker rm qiimepipe_prepare_$TIMESTAMP
 
 	echo "Done!"
 
@@ -205,10 +220,10 @@ then
 	chmod -R 777 ../prepare_output
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
-	docker exec -i qiimepipe /bin/bash -c 'cd /output/prepare_output/; \
+	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
 	for i in index_*; do newfile="${i#"index_"}"; newfile2=$(basename $newfile .fastq); \ 
 	python3.6 /qiimepipe/fastq_strip_barcode_relabel2.py $i '$REVERSE_ADAPTER' '/output/${BARCODES_3END_FASTA}' Ex > ${newfile2}_clipped.fastq; done;\
 	chmod -R 777 /output/prepare_output/'
@@ -221,7 +236,7 @@ then
 	for i in *_min50.fastq; do newfile="$(basename $i _min50.fastq)"; docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_fastxtoolkit:v0.0.14 fastx_reverse_complement -i /output/prepare_output/${i} -o /output/prepare_output/${newfile}_revclipped.fastq; done;
 
 	echo "Running the QiimePipe Container: "
-	docker exec -i qiimepipe /bin/bash -c 'cd /output/prepare_output/; \
+	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
 	for i in *_revclipped.fastq; do newfile=$(basename $i _revclipped.fastq); \ 
 	python3.6 /qiimepipe/fastq_strip_barcode_relabel2.py $i '$FORWARD_ADAPTER' '/output/${BARCODES_5END_DIR}'/barcodes_${newfile}.fasta Ex > samples_${newfile}.fastq; done;\
 	chmod -R 777 /output/prepare_output/'
@@ -230,12 +245,12 @@ then
 	chmod 777 ${OUTPUT_NAME}.fastq
 
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
-	docker exec -i adapter_removal  /bin/bash -c 'cd /output/prepare_output/;\
+	docker exec -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/prepare_output/;\
 	 AdapterRemoval --file1 '${OUTPUT_NAME}'.fastq --threads '$NUM_THREADS' --trimwindows 10 \
-	 --minquality 20 --minlength 50 --qualitymax 64 --basename '${OUTPUT_NAME}'_good; \
+	 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename '${OUTPUT_NAME}'_good; \
 	  chmod -R 777 /output/prepare_output/;'
 
 
@@ -244,16 +259,16 @@ then
 
     rm indexcreveol* indexforbol* index_* *clipped* *min50* 
 
-    docker exec -i qiimepipe  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
+    docker exec -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
     mv ${OUTPUT_NAME}_good.fasta ../
 
     echo "Stopping Containeres: "
-	docker stop adapter_removal
-	docker stop qiimepipe
+	docker stop adapter_removal_prepare_$TIMESTAMP
+	docker stop qiimepipe_prepare_$TIMESTAMP
 
 	echo "Removing Containeres: "
-	docker rm adapter_removal
-	docker rm qiimepipe
+	docker rm adapter_removal_prepare_$TIMESTAMP
+	docker rm qiimepipe_prepare_$TIMESTAMP
 
 	echo "Done!"
 
@@ -304,32 +319,32 @@ then
 	chmod -R 777 ${OUTPUT_NAME}.fastq
 
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
-	docker exec -i adapter_removal  /bin/bash -c 'cd /output/prepare_output/;\
-	 AdapterRemoval --file1 '${OUTPUT_NAME}.fastq' --threads '$NUM_THREADS' --minlength 50 \
+	docker exec -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/prepare_output/;\
+	 AdapterRemoval --file1 '${OUTPUT_NAME}.fastq' --threads '$NUM_THREADS' --minlength '$MINLENGTH' \
 	 --basename '${OUTPUT_NAME}_min'; chmod -R 777 /output/prepare_output/;'
 
 	# for i in ${PREFIX}_*fastq; do newfile="$(basename $i .fastq)"; echo working with $i; AdapterRemoval --file1 $i --threads 1 --minlength 50 --basename ${newfile}_min; 
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
-	docker exec -i qiimepipe /bin/bash -c 'cd /output/prepare_output/; \
+	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
 	python3.6 /qiimepipe/fastq_strip_barcode_relabel2.py '${OUTPUT_NAME}_min.truncated' '$ADAPTER' '/output/${BARCODES_5END_FASTA}' Seq > '${OUTPUT_NAME}_clipped.fastq';\
 	chmod -R 777 /output/prepare_output/'
 
 	# /bio/share_bio/softwares/BMP_UPARSE_Scripts/fastq_strip_barcode_relabel2.py ${newfile}_min.truncated $ADAPTER $BARCODES_5END_FASTA Seq >> ${OUTPUT_NAME}.fastq; done;
 
 	# echo "Creating an AdapterRemoval Container: "
-	# docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal itvdsbioinfo/pimba_adapterremoval:v2.2.2
+	# docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.2
 
 	echo "Running the AdapterRemoval Container: "
-	docker exec -i adapter_removal  /bin/bash -c 'cd /output/prepare_output/;\
+	docker exec -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/prepare_output/;\
 	 AdapterRemoval --file1 '${OUTPUT_NAME}_clipped.fastq' --threads '$NUM_THREADS' \
-	 --trimwindows 10 --minquality 20 --minlength 50 --qualitymax 64 \
+	 --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 \
 	 --basename '${OUTPUT_NAME}_good'; chmod -R 777 /output/prepare_output/;'
 
 
@@ -338,18 +353,18 @@ then
 	echo "Creating and running a Prinseq Container: "
 	docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/prepare_output/${OUTPUT_NAME}_good.truncated -out_format 1 -out_good /output/prepare_output/${OUTPUT_NAME}_good
 
-    docker exec -i qiimepipe  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
+    docker exec -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
     mv ${OUTPUT_NAME}_good.fasta ../
 
 	# prinseq-lite.pl -fastq ${OUTPUT_NAME}_good.truncated -out_format 1 -out_good ${OUTPUT_NAME}_good
 	#mv ${OUTPUT_NAME}_good.truncated ${OUTPUT_NAME}_good.fastq
 	echo "Stopping Containeres: "
-	docker stop adapter_removal
-	docker stop qiimepipe
+	docker stop adapter_removal_prepare_$TIMESTAMP
+	docker stop qiimepipe_prepare_$TIMESTAMP
 
 	echo "Removing Containeres: "
-	docker rm adapter_removal
-	docker rm qiimepipe
+	docker rm adapter_removal_prepare_$TIMESTAMP
+	docker rm qiimepipe_prepare_$TIMESTAMP
 
 	echo "Done!"
 
