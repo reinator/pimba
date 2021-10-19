@@ -63,7 +63,7 @@ In case your single-end reads have been multiplexed with single-index, use the f
 <num_threads> = number of threads;\
 <output_name> = name for the output fastq file;\
 <min_lenght> = The minimum lenght of the read after quality treatment;\
-<min_phred> = Minimum PHRED score of a read after quality treatment.\
+<min_phred> = Minimum PHRED score of a read after quality treatment.
 
 Example:
 ~~~
