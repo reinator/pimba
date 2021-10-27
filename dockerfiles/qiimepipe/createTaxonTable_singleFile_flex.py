@@ -61,13 +61,16 @@ def createDicBlast(blastTable):
 		otuid = line[0]
 		if(otuid.find("gb|") != -1):
 			otuid = otuid[3:-1]
+			#print(otuid)
 		organism_list = [line[4]]
 		identity_list = [line[5]]
-		taxid_list = [line[3][0]]
+		#taxid_list = [line[3][0]]
+		taxid_list = [line[2]]
 		if(i+1!=len(lines)):
 			new_otuid = lines[i+1].split("\t")[0]
 			if(new_otuid.find("gb|") != -1):
 				new_otuid = new_otuid[3:-1]
+				#print(new_otuid)
 			while(new_otuid == otuid):
 				i+=1
 				
@@ -77,7 +80,8 @@ def createDicBlast(blastTable):
 				line[3]=line[3].split(";")
 				organism_list.append(line[4]) #changing to get the description rather than organism name, because blastn is now remote and no organism name is returned
 				identity_list.append(line[5])
-				taxid_list.append(line[3][0])
+				#taxid_list.append(line[3][0])
+				taxid_list.append(line[2])
 				if(i+1==len(lines)): 
 					break
 				else:
@@ -92,8 +96,9 @@ def createDicBlast(blastTable):
 		#dicBlast[otuid] = check_uncultered(organism_list, identity_list, taxid_list)
 		#dicBlast[line[0]]=line[2][0],line[3]
 		#dicBlast[line[0]]=line[1],line[5],line[3][0] # OTUId = organism_list, identity_list, TaxID
-		i+=1
+		
 		if(i+1==len(lines)): break
+		i+=1
 	#dicBlast["*"] = "unassigned",0,0
 	return dicBlast
 
@@ -105,8 +110,8 @@ def convertBlastToQiimeTax(dicBlast, dicTaxAssignId, filename, unassigned_otu):
 	for otu in otus:
 		taxid = dicBlast[otu][2]
 		taxon = dicTaxAssignId[str(taxid)]
-		taxon = taxon.split(";")
-		species = taxon[6][taxon[6].find(" ")+1:-1]
+		taxon = taxon.strip().split(";")
+		species = taxon[6][taxon[6].find(" ")+1:]
 		
 		qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
 		#qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species.replace(" ","")+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
@@ -201,6 +206,7 @@ filename = sys.argv[2][:fim]
 unassigned_otu = []
 
 sample_ids = dicOtu.keys()
+#print(sample_ids)
 
 for s in sample_ids:
 
@@ -211,11 +217,13 @@ for s in sample_ids:
 	dic_keys = dic.keys()
 	dic_blast_keys = dicBlast.keys()
 
+	#print(dic_blast_keys)
+
 	dicOtuKeys = dic.keys()
 
 	outtxt = "OTUID\tread_count\ttaxon\tsimilarity%\ttaxonomy\n"
 	for k in dicOtuKeys:
-
+		#print(k)
 		if(k in dic_keys and k in dic_blast_keys):
 			if(dic[k]!="0"):
 				taxid_blast = dicBlast[k][2]
