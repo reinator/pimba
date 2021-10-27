@@ -21,7 +21,7 @@ Please, place all your forward and reverse reads in one directory and make sure 
 <num_threads> = number of threads;\
 <adapters.txt> = tab separated 2-column file with all adapters and primers used for sequencing;\
 <min_lenght> = The minimum lenght of the read after quality treatment;\
-<min_phred> = Minimum PHRED score of a read after quality treatment.\
+<min_phred> = Minimum PHRED score of a read after quality treatment.
 
 Example:
 ~~~
@@ -42,8 +42,8 @@ In case your single-end reads have been multiplexed with dual-index, use the fol
 <Primer_reverse> = sequence of the reverse primer;\
 <num_threads> = number of threads;\
 <output_name> = name for the output fastq file;\
-<min_lenght> = The minimum lenght of the read after quality treatment;\
-<min_phred> = Minimum PHRED score of a read after quality treatment.\
+<min_length> = The minimum lenght of the read after quality treatment;\
+<min_phred> = Minimum PHRED score of a read after quality treatment.
 
 Example:
 ~~~
@@ -63,7 +63,7 @@ In case your single-end reads have been multiplexed with single-index, use the f
 <num_threads> = number of threads;\
 <output_name> = name for the output fastq file;\
 <min_lenght> = The minimum lenght of the read after quality treatment;\
-<min_phred> = Minimum PHRED score of a read after quality treatment.\
+<min_phred> = Minimum PHRED score of a read after quality treatment.
 
 Example:
 ~~~
