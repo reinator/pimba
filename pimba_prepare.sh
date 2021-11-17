@@ -91,9 +91,9 @@ then
 	mkdir R1; mkdir R2;
 
 	cd R1
-	ln -s ../../${RAWDATADIR}/*_R1* .
+	ln -s ${FULL_PATH_RAW}/*_R1* .
 	cd ../R2
-	ln -s ../../${RAWDATADIR}/*_R2* .
+	ln -s ${FULL_PATH_RAW}/*_R2* .
 
 	cd ../../
 	chmod -R 777 prepare_output
