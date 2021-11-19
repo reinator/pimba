@@ -70,7 +70,7 @@ then
 	MINLENGTH=$6
 	MINPHRED=$7
 
-	DIR_NAME_RAW=$(dirname $RAWDATADIR)
+	DIR_NAME_RAW=$(dirname ${RAWDATADIR}/*)
 	cd $DIR_NAME_RAW
 	FULL_PATH_RAW=$(pwd)
 	cd $CURRENT_PATH
@@ -91,9 +91,9 @@ then
 	mkdir R1; mkdir R2;
 
 	cd R1
-	ln -s ${FULL_PATH_RAW}/*_R1* .
+	cp ${FULL_PATH_RAW}/*_R1* .
 	cd ../R2
-	ln -s ${FULL_PATH_RAW}/*_R2* .
+	cp ${FULL_PATH_RAW}/*_R2* .
 
 	cd ../../
 	chmod -R 777 prepare_output
@@ -107,7 +107,7 @@ then
 	 for i in R1/*.fastq; do newfile=${i%%_*}; newfile=${newfile##*/}; echo $newfile;\
 	 AdapterRemoval --file1 $i --file2 R2/${newfile}* --threads '$NUM_THREADS' --mate-separator " " --adapter-list /adapter_removal/$(echo ${FULL_PATH_ADAP#"$COMMON_PATH"})/$(basename $ADAPTERS) \
 	  --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
-	  chmod -R 777 /output/prepare_output/;'
+	  rm -r R1/ R2/; chmod -R 777 /output/prepare_output/;'
 
     mkdir -p assemblies/pear
     cd assemblies/pear
