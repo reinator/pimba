@@ -139,6 +139,26 @@ then
 
 	chmod 777 ../../${OUTPUTNAME}.fasta
 
+	for i in *relabel.fasta; do newfile=$(basename $i .relabel.fasta); mv $i ${newfile}_relabel_notSingleton.fasta; done;
+
+
+	#NOW GENERATING OUTPUT WITH SINGLETON READS
+	echo "Creating and running a Prinseq Container: "
+	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; cat ${newfile}/*assembled.fastq ${newfile}/*unassembled.* ../../prepare_output/${newfile}_good.singleton.truncated > ${newfile}/${newfile}_withSingleton.fastq ;docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${newfile}/${newfile}_withSingleton.fastq -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled.withSingleton; done;
+
+	echo "Running the QiimePipe Container: "
+	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
+	for i in *withSingleton.fasta; do newfile=$(basename $i .assembled.withSingleton.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
+	chmod -R 777 /output/assemblies/'
+
+	cat *relabel.fasta > ${OUTPUTNAME}_withSingleton.fasta
+
+	mv ${OUTPUTNAME}_withSingleton.fasta ../../
+
+	chmod 777 ../../${OUTPUTNAME}_withSingleton.fasta
+
+	for i in *relabel.fasta; do newfile=$(basename $i .relabel.fasta); mv $i ${newfile}_relabel_withSingleton.fasta; done;
+
 	echo "Stopping Containeres: "
 	docker stop adapter_removal_prepare_$TIMESTAMP
 	docker stop pear_prepare_$TIMESTAMP
