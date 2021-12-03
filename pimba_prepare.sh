@@ -144,7 +144,7 @@ then
 
 	#NOW GENERATING OUTPUT WITH SINGLETON READS
 	echo "Creating and running a Prinseq Container: "
-	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; cat ${newfile}/*assembled.fastq ${newfile}/*unassembled.* ../../prepare_output/${newfile}_good.singleton.truncated > ${newfile}/${newfile}_withSingleton.fastq ;docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${newfile}/${newfile}_withSingleton.fastq -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled.withSingleton; done;
+	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; cat ${newfile}/*assembled.fastq ${newfile}/*unassembled.* ../../prepare_output/${newfile}_good.singleton.truncated > ${newfile}/${newfile}_withSingleton.fastq ; sed -i 's/ /_/g' ${newfile}/${newfile}_withSingleton.fastq; docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${newfile}/${newfile}_withSingleton.fastq -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled.withSingleton; done;
 
 	echo "Running the QiimePipe Container: "
 	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
