@@ -130,7 +130,7 @@ then
 
 	echo "Running the QiimePipe Container: "
 	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
-	for i in *.fasta; do newfile=$(basename $i .assembled.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
+	for i in *assembled.fasta; do newfile=$(basename $i .assembled.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
 	chmod -R 777 /output/assemblies/'
 
 	cat *relabel.fasta > ${OUTPUTNAME}.fasta
@@ -148,7 +148,7 @@ then
 
 	echo "Running the QiimePipe Container: "
 	docker exec -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
-	for i in *withSingleton.fasta; do newfile=$(basename $i .assembled.withSingleton.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
+	for i in *.assembled.withSingleton.fasta; do newfile=$(basename $i .assembled.withSingleton.fasta); echo $newfile; python3.6 /qiimepipe/relabelReads-v2.py $i .; done;\
 	chmod -R 777 /output/assemblies/'
 
 	cat *relabel.fasta > ${OUTPUTNAME}_withSingleton.fasta
