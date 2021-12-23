@@ -541,7 +541,7 @@ then
 	docker rm qiimepipe_run_$TIMESTAMP
 
 	#Filter out contaminants basing on ncbi/nt blast
-	#export BLASTDB=$NCBI_DB_EXP
+	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
@@ -847,7 +847,48 @@ then
 	docker stop blast_run_$TIMESTAMP
 	docker rm blast_run_$TIMESTAMP
 	
+elif [ $GENE = "ALL-NCBI" ];
+then
+	docker stop qiimepipe_run_$TIMESTAMP
+	docker rm qiimepipe_run_$TIMESTAMP
 
+	#Assign taxonomy to OTUS using blast. The blast database is needed.
+	export BLASTDB=$NCBI_DB_EXP
+
+	echo "Creating a BLAST Container: "
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+
+	echo "Running the BLAST Container - blastn: "
+	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db /blastdb/nt -perc_identity \
+		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads '$THREADS' \
+		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
+		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	#blastn -query ${newfile}_otus.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
+
+	mkdir diversity_by_sample
+	cd diversity_by_sample
+
+	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
+	echo "Creating a QiimePipe Container: "
+	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
+	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
+	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast.log \
+	../'${newfile}'_otu_table.txt /taxdump/rankedlineage.dmp; \
+	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
+	#python ${SCRIPT_PATH}/createTaxonTable_singleFile.py ../${newfile}_blast.log ../${newfile}_otu_table.txt
+	cd ../
+
+	mkdir output
+	chmod -R 777 output
+	mv ${newfile}_otus_tax_assignments.txt output/
+	
+
+	docker stop blast_run_$TIMESTAMP
+	docker rm blast_run_$TIMESTAMP
 else
 	docker stop qiimepipe_run_$TIMESTAMP
 	docker rm qiimepipe_run_$TIMESTAMP
