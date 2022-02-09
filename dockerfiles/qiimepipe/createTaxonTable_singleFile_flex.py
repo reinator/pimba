@@ -105,15 +105,21 @@ def createDicBlast(blastTable):
 def convertBlastToQiimeTax(dicBlast, dicTaxAssignId, filename, unassigned_otu):
 	qiimeTaxFile = open(filename+"_otus_tax_assignments.txt","w")
 	qiimeTaxTxt = ""
+	taxonNotFound_file = open(filename+"_taxon_red_flagged.txt", "w")
+	taxonNotFound_txt = "OTU\tTaxid\n"
 	otus = dicBlast.keys()
+	taxids = dicTaxAssignId.keys()
 
 	for otu in otus:
 		taxid = dicBlast[otu][2]
-		taxon = dicTaxAssignId[str(taxid)]
-		taxon = taxon.strip().split(";")
-		species = taxon[6][taxon[6].find(" ")+1:]
-		
-		qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
+		if(taxid in taxids):
+			taxon = dicTaxAssignId[str(taxid)]
+			taxon = taxon.strip().split(";")
+			species = taxon[6][taxon[6].find(" ")+1:]
+			
+			qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
+		else:
+			taxonNotFound_txt+=otu+"\t"+taxid+"\n"
 		#qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species.replace(" ","")+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
 
 	for unass_otu in unassigned_otu:
@@ -121,8 +127,10 @@ def convertBlastToQiimeTax(dicBlast, dicTaxAssignId, filename, unassigned_otu):
 
 
 	qiimeTaxFile.write(qiimeTaxTxt)
+	taxonNotFound_file.write(taxonNotFound_txt)
 
 	qiimeTaxFile.close()
+	taxonNotFound_file.close()
 
 def createDicOtu(otuTable):
 	dicOtu = dict() #Dictionary of dictionary. The first key is the Sample ID, whose value will be a dictionary with the OTU as keys and the abundance as values
