@@ -1,6 +1,16 @@
 # pimba
 PIMBA, a PIpeline for MetaBarcoding Analysis which allows the use of customized databases, as well as other reference databases.
 
+## How to cite?
+The peer-reviewed version of the paper can be found at https://doi.org/10.1007/978-3-030-91814-9_10
+~~~
+OLIVEIRA, R. R. M. et al. PIMBA: A PIpeline for MetaBarcoding Analysis. Advances in Bioinformatics and Computational Biology. 1ed. Swtizerland: Springer, 2021, v. 13063, p. 106–116, 2021.
+~~~
+
+~~~
+OLIVEIRA, RENATO RENISON MOREIRA; SILVA, R. L. ; NUNES, GISELE LOPES ; OLIVEIRA, GUILHERME .PIMBA: a PIpeline for MetaBarcoding Analysis. In: Stadler P.F., Walter M.E.M.T., Hernandez-Rosales M., Brigido M.M.. (Org.).Advances in Bioinformatics and Computational Biology. 1ed. Swtizerland: Springer, 2021, v. 13063, p. 106-116
+~~~
+
 ## How to install?
 To run PIMBA, you just need to have docker (see https://docs.docker.com) installed in your operational system. 
 ~~~
