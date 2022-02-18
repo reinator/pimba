@@ -831,12 +831,12 @@ then
 	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile_flex.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /coibold/*_tax.txt; \
-	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
+	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_taxon_red_flagged.txt'
 	#python ${SCRIPT_PATH}/createTaxonTable_singleFile_flex.py ../${newfile}_blast.log ../${newfile}_otu_table.txt ${COI_BOLD_DB}_tax.txt
 	cd ..
 	mkdir output
 	chmod -R 777 output
-	mv ${newfile}_otus_tax_assignments.txt output/
+	mv ${newfile}_otus_tax_assignments.txt ${newfile}_taxon_red_flagged.txt output/
 	
 	
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
@@ -916,13 +916,13 @@ else
 	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile_flex.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /gene/*_tax.txt; \
-	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
+	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_taxon_red_flagged.txt'
 
 	#python ${SCRIPT_PATH}/createTaxonTable_singleFile_flex.py ../${newfile}_blast.log ../${newfile}_otu_table.txt <colocar tax>
 	cd ../
 	mkdir output
 	chmod -R 777 output
-	mv ${newfile}_otus_tax_assignments.txt output/
+	mv ${newfile}_otus_tax_assignments.txt ${newfile}_taxon_red_flagged.txt output/
 
 	docker stop blast_run_$TIMESTAMP
 	docker rm blast_run_$TIMESTAMP
