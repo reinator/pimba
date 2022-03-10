@@ -734,8 +734,11 @@ then
 	#python ${SCRIPT_PATH}/createTaxonTable_singleFile.py ../${newfile}_blast.log ../${newfile}_otu_table.txt
 	cd ../
 	mkdir output
-	chmod -R 777 output
+	
+	mv *_otus_tax_assignments.txt ${newfile}_otus_tax_assignments.txt
 	mv ${newfile}_otus_tax_assignments.txt output/
+
+	chmod -R 777 output
 
 	
 
