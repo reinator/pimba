@@ -137,7 +137,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
 
 	echo  "Running the ITSx Container: "
-	docker exec -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		ITSx -i '../${RAWDATA}' -o '${newfile}_itsx' -t f \
 		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
 
@@ -145,7 +145,7 @@ then
 	chmod 777 ${newfile}_itsx.fasta
 
 	echo "Running the VSEARCH Container - --derep_fulllength: "
-	docker exec -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		vsearch --derep_fulllength '${newfile}_itsx.fasta' --output '${newfile}_derep.fasta' --sizeout; \
 		chmod -R 777 /output/'$OUTPUT';'
 	#vsearch --derep_fulllength ../${RAWDATA} --output ${newfile}_derep.fasta --sizeout
@@ -159,7 +159,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
 
 	echo  "Running the ITSx Container: "
-	docker exec -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		ITSx -i '../${RAWDATA}' -o '${newfile}_itsx' -t t \
 		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
 
@@ -168,7 +168,7 @@ then
 	chmod 777 ${newfile}_itsx.fasta
 
 	echo "Running the VSEARCH Container - --derep_fulllength: "
-	docker exec -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		vsearch --derep_fulllength '${newfile}_itsx.fasta' --output '${newfile}_derep.fasta' --sizeout; \
 		chmod -R 777 /output/'$OUTPUT';'
 	#vsearch --derep_fulllength ../${RAWDATA} --output ${newfile}_derep.fasta --sizeout
@@ -177,7 +177,7 @@ then
 	docker rm itsx_run_$TIMESTAMP
 else
 	echo "Running the VSEARCH Container - --derep_fulllength: "
-	docker exec -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		vsearch --derep_fulllength '../${RAWDATA}' --output '${newfile}_derep.fasta' --sizeout; \
 		chmod -R 777 /output/'$OUTPUT';'
 	#vsearch --derep_fulllength ../${RAWDATA} --output ${newfile}_derep.fasta --sizeout
@@ -185,7 +185,7 @@ fi
 
 #Abundance sort and discard singletons <<<USING VSEARCH>>
 echo "Running the VSEARCH Container - --sortbysize: "
-docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --sortbysize '${newfile}_derep.fasta' --output '${newfile}_sorted.fasta' --minsize 2; \
 	chmod 777 '${newfile}_sorted.fasta';'
 #vsearch --sortbysize ${newfile}_derep.fasta --output ${newfile}_sorted.fasta --minsize 2
@@ -193,7 +193,7 @@ docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 # Shortening reads in the ITS extracted FASTA file <<<USING VSEARCH>>>
 if [ $LENGTH != "0" ];
 then
-	docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --fastx_filter  '${newfile}_sorted.fasta' --fastq_trunclen '$LENGTH' \
 	--fastaout '${newfile}_trimmed.fasta'; chmod 777 '${newfile}_trimmed.fasta';'
 	#vsearch --fastx_filter  ${newfile}_sorted.fasta --fastq_trunclen $LENGTH --fastaout ${newfile}_trimmed.fasta
@@ -205,7 +205,7 @@ if [ $APPROACH = "otu" ];
 then
 	#OTU clustering using UPARSE method <<<USING VSEARCH>>>
 	echo "Running the VSEARCH Container - --cluster_size: "
-	docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 		vsearch --cluster_size '${newfile}_trimmed.fasta' --consout '${newfile}_otus1.fasta' \
 		--id '$SIMILARITY' --threads '$THREADS' ; chmod 777 '${newfile}_otus1.fasta';'
 	#vsearch --cluster_size ${newfile}_trimmed.fasta --consout ${newfile}_otus1.fasta --id $SIMILARITY
@@ -214,7 +214,7 @@ then
 	#Discarding reads with more than 1 Ns, since swarm cannot handle it
 
 	echo "Running the VSEARCH Container - --fastx_filter: "
-	docker exec -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		vsearch --fastx_filter '${newfile}_trimmed.fasta' --fastq_maxns 0 --fastaout '${newfile}_trimmed_noN.fasta' ; \
 		chmod 777  '${newfile}_trimmed_noN.fasta';'
 
@@ -223,7 +223,7 @@ then
 
 	#Finding ASVs using SWARM method
 	echo "Running the SWARM Container: "
-	docker exec -i swarm_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i swarm_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 		swarm -d 0 -z -t '$THREADS' -w '${newfile}_trimmed_noN_derep.fasta' -o /dev/null '${newfile}_trimmed_noN.fasta'; \
 		swarm -f -t '$THREADS' -l swarm.err -o swarm.log -w '${newfile}_otus1.fasta' -u uclust_format.file -z \
 		-d 1 '${newfile}_trimmed_noN_derep.fasta'; chmod 777 '${newfile}_otus1.fasta' '${newfile}_trimmed_noN_derep.fasta';'
@@ -237,7 +237,7 @@ fi
 
 #Chimera filtering using de novo strategy <<<USING VSEARCH>>>
 echo "Running the VSEARCH Container - --uchime_denovo: "
-docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --uchime_denovo '${newfile}_otus1.fasta' --fasta_width 0 -uchimeout '${newfile}_otus_nochim' \
 	--chimeras '${newfile}_chim.fasta' --nonchimeras '${newfile}_noChim.fasta'; \
 	chmod 777 '${newfile}_otus_nochim' '${newfile}_chim.fasta' '${newfile}_noChim.fasta';'
@@ -245,7 +245,7 @@ docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 
 # Fasta Formatter <<<FASTX TOOLKIT SCRIPT>>>
 echo "Creating and running a fasxttoolkit Container: "
-docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_fastxtoolkit:v0.0.14 fasta_formatter -i /output/${OUTPUT}/${newfile}_noChim.fasta -o /output/${OUTPUT}/${newfile}_formated_otus2.fasta
+docker run -u $(id -u) -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_fastxtoolkit:v0.0.14 fasta_formatter -i /output/${OUTPUT}/${newfile}_noChim.fasta -o /output/${OUTPUT}/${newfile}_formated_otus2.fasta
 #fasta_formatter -i ${newfile}_noChim.fasta -o ${newfile}_formated_otus2.fasta
 
 #Renamer <<<BMP SCRIPT>>>
@@ -253,7 +253,7 @@ echo "Creating a Perl Container: "
 docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name perl_run_$TIMESTAMP itvdsbioinfo/pimba_perl:v5
 
 echo "Running the Perl Container: "
-docker exec -i perl_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i perl_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	perl /data/bmp-otuName.pl -i '${newfile}_formated_otus2.fasta' -o '${newfile}_otus.fasta'; \
 	chmod 777 '${newfile}_formated_otus2.fasta' '${newfile}_otus.fasta';'
 #perl ${BMP_PATH}/bmp-otuName.pl -i ${newfile}_formated_otus2.fasta -o ${newfile}_otus.fasta
@@ -265,7 +265,7 @@ fi
 
 #Map reads back to OTU database <<<VSEARCH script>>>
 echo "Running the VSEARCH Container - --usearch_global: "
-docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global ../'${RAWDATA}' --db '${newfile}'_otus.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map.uc --threads '$THREADS' ; \
 	chmod 777 '${newfile}'_map.uc;'
@@ -276,7 +276,7 @@ echo "Creating a QiimePipe Container: "
 docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 echo "Running the QiimePipe Container - uc2otutab: "
-docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map.uc > '${newfile}'_otu_table.txt;\
 	chmod 777 '${newfile}'_otu_table.txt'
 #python ${BMP_PATH}/uc2otutab.py ${newfile}_map.uc > ${newfile}_otu_table.txt
@@ -299,14 +299,14 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - makeblastdb: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; mkdir lulu_output; cd lulu_output/; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; mkdir lulu_output; cd lulu_output/; \
 		makeblastdb -in ../'${newfile}'_otus.fasta -out '${newfile}'_otus.fasta -parse_seqids -dbtype nucl ; \
 		chmod -R 777 ../lulu_output'
 	#makeblastdb -in ${newfile}_otus.fasta -parse_seqids -dbtype nucl
 
 	#Make a blast with the OTUs against the same OTUs database created in the previous step
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
 		blastn -db '${newfile}'_otus.fasta -outfmt "6 qseqid sseqid pident" -out match_list.txt \
 		-num_threads '$THREADS' -qcov_hsp_perc 80 -perc_identity 84 -query ../'${newfile}'_otus.fasta; \
 		chmod 777 match_list.txt'
@@ -317,7 +317,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name rdocker_run_$TIMESTAMP itvdsbioinfo/pimba_r:latest bash
 
 	echo "Running the R Container - lulu: "
-	docker exec -i rdocker_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
+	docker exec -u $(id -u) -i rdocker_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
 		Rscript /data/file.R ../'${newfile}'_otu_table.txt match_list.txt '${newfile}'_otu_table_lulu.txt; \
 		chmod 777 '${newfile}'_otu_table_lulu.txt lulu.log*'
 	#Rscript ${SCRIPT_PATH}/file.R ${newfile}_otu_table.txt match_list.txt ${newfile}_otu_table_lulu.txt
@@ -349,7 +349,7 @@ then
 
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/taxonomy/16S_only/'${SIMILARITY_INT}'/taxonomy_7_levels.txt \
 	-r /database/rep_set/rep_set_16S_only/'${SIMILARITY_INT}'/silva_132_'${SIMILARITY_INT}'_16S.fna --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
@@ -357,21 +357,21 @@ then
 	
 	#Align sequences on QIIME, using greengenes reference sequences (use the file “otus.fa” from UPARSE as input file)
 	echo "Running the Qiime Container - align_seqs.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	align_seqs.py -i '${newfile}'_otus.fasta -o rep_set_align -t /database/rep_set_aligned/'${SIMILARITY_INT}'/'${SIMILARITY_INT}'_alignment.fna; \
 	chmod -R 777 rep_set_align'
 	#align_seqs.py -i ${newfile}_otus.fasta -o rep_set_align -t ${SILVA_DB_16S}/rep_set_aligned/${SIMILARITY_INT}/${SIMILARITY_INT}_alignment.fna
 
 	#Filter alignments on QIIME
 	echo "Running the Qiime Container - filter_alignment.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	filter_alignment.py -i rep_set_align/'${newfile}'_otus_aligned.fasta -o filtered_alignment; \
 	chmod -R 777 filtered_alignment'
 	#filter_alignment.py -i rep_set_align/${newfile}_otus_aligned.fasta -o filtered_alignment
 
 	#Make the reference tree on QIIME
 	echo "Running the Qiime Container - make_phylogeny.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	make_phylogeny.py -i filtered_alignment/'${newfile}'_otus_aligned_pfiltered.fasta -o rep_set.tre; \
 	chmod -R 777 rep_set.tre'
 	#make_phylogeny.py -i filtered_alignment/${newfile}_otus_aligned_pfiltered.fasta -o rep_set.tre
@@ -382,7 +382,7 @@ then
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 
 	echo "Running the QiimePipe Container - createAbundanceFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createAbundanceFile.py ../output/'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_otu_table.txt;\
 	chmod -R 777 ../diversity_by_sample'
 	#python ${SCRIPT_PATH}/createAbundanceFile.py ../output/${newfile}_otus_tax_assignments.txt ../${newfile}_otu_table.txt
@@ -400,7 +400,7 @@ then
 
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/taxonomy/${SIMILARITY_INT}_otu_taxonomy.txt \
 	-r /database/rep_set/${SIMILARITY_INT}_otus.fasta --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
@@ -408,21 +408,21 @@ then
 
 	#Align sequences on QIIME, using greengenes reference sequences (use the file “otus.fa” from UPARSE as input file)
 	echo "Running the Qiime Container - align_seqs.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	align_seqs.py -i '${newfile}'_otus.fasta -o rep_set_align -t /database/rep_set_aligned/'${SIMILARITY_INT}_otus.fasta'; \
 	chmod -R 777 rep_set_align'
 	#align_seqs.py -i ${newfile}_otus.fasta -o rep_set_align -t ${GG_DB_16S}/rep_set_aligned/${SIMILARITY_INT}_otus.fasta
 
 	#Filter alignments on QIIME
 	echo "Running the Qiime Container - filter_alignment.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	filter_alignment.py -i rep_set_align/'${newfile}'_otus_aligned.fasta -o filtered_alignment; \
 	chmod -R 777 filtered_alignment'
 	#filter_alignment.py -i rep_set_align/${newfile}_otus_aligned.fasta -o filtered_alignment
 
 	#Make the reference tree on QIIME
 	echo "Running the Qiime Container - make_phylogeny.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	make_phylogeny.py -i filtered_alignment/'${newfile}'_otus_aligned_pfiltered.fasta -o rep_set.tre; \
 	chmod -R 777 rep_set.tre'
 	#make_phylogeny.py -i filtered_alignment/${newfile}_otus_aligned_pfiltered.fasta -o rep_set.tre
@@ -432,7 +432,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createAbundanceFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createAbundanceFile.py ../output/'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_otu_table.txt;\
 	chmod -R 777 ../diversity_by_sample'
 	#python ${SCRIPT_PATH}/createAbundanceFile.py ../output/${newfile}_otus_tax_assignments.txt ../${newfile}_otu_table.txt
@@ -450,7 +450,7 @@ then
 
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/*.t* \
 	-r /database/rep_set/*.fa* --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
@@ -458,21 +458,21 @@ then
 
 	#Align sequences on QIIME, using RDP reference sequences (use the file “otus.fa” from UPARSE as input file)
 	echo "Running the Qiime Container - align_seqs.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	align_seqs.py -i '${newfile}'_otus.fasta -o rep_set_align -t /database/*align*; \
 	chmod -R 777 rep_set_align'
 	#align_seqs.py -i ${newfile}_otus.fasta -o rep_set_align -t ${RDP_DB_16S}/trainset16_022016.rdp.align.fasta
 
 	#Filter alignments on QIIME
 	echo "Running the Qiime Container - filter_alignment.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	filter_alignment.py -i rep_set_align/'${newfile}'_otus_aligned.fasta -o filtered_alignment; \
 	chmod -R 777 filtered_alignment'
 	#filter_alignment.py -i rep_set_align/${newfile}_otus_aligned.fasta -o filtered_alignment
 
 	#Make the reference tree on QIIME
 	echo "Running the Qiime Container - make_phylogeny.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	make_phylogeny.py -i filtered_alignment/'${newfile}'_otus_aligned_pfiltered.fasta -o rep_set.tre; \
 	chmod -R 777 rep_set.tre'
 	#make_phylogeny.py -i filtered_alignment/${newfile}_otus_aligned_pfiltered.fasta -o rep_set.tre
@@ -482,7 +482,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiimeecho "Running the QiimePipe Container - createAbundanceFile.py: "
 	echo "Running the QiimePipe Container - createAbundanceFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createAbundanceFile.py ../output/'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_otu_table.txt;\
 	chmod -R 777 ../diversity_by_sample'
 	#python ${SCRIPT_PATH}/createAbundanceFile.py ../output/${newfile}_otus_tax_assignments.txt ../${newfile}_otu_table.txt
@@ -503,7 +503,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -519,7 +519,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /taxdump/rankedlineage.dmp; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
@@ -547,7 +547,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -564,7 +564,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
 	python3.6 /qiimepipe/create_otuTaxAssignment.py ../'${newfile}'_blast_ncbi.log \
 	../'${newfile}'_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
 	#python ${SCRIPT_PATH}/create_otuTaxAssignment.py ../${newfile}_blast_ncbi.log ../${newfile}_otu_table.txt ncbi_otus_tax_assignments.txt
@@ -573,14 +573,14 @@ then
 
 	#Obtaining only the OTUs classified as Fungi
 	echo "Running the QiimePipe Container - filterOTUs.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	python3.6 /qiimepipe/filterOTUs.py '${newfile}'_otus.fasta diversity_by_sample_ncbi/ncbi_otus_tax_assignments.txt; \
 	chmod 777 k__Fungi.* *filtered.fasta *contigIDs.txt'
 	#python ${SCRIPT_PATH}/filterOTUs.py ${newfile}_otus.fasta diversity_by_sample_ncbi/ncbi_otus_tax_assignments.txt
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query k__Fungi.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -590,7 +590,7 @@ then
 
 	#Map reads back to OTU database <<<VSEARCH script>>>
 	echo "Running the VSEARCH Container - --usearch_global: "
-	docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global ../'${RAWDATA}' --db k__Fungi.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map_fungi.uc; \
 	chmod 777 '${newfile}'_map_fungi.uc;'
@@ -598,7 +598,7 @@ then
 
 	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 	echo "Running the QiimePipe Container - uc2otutab: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map_fungi.uc > '${newfile}'_otu_table_fungi.txt;\
 	chmod 777 '${newfile}'_otu_table_fungi.txt'
 	#python ${BMP_PATH}/uc2otutab.py ${newfile}_map_fungi.uc > ${newfile}_otu_table_fungi.txt
@@ -608,7 +608,7 @@ then
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast_fungi.log \
 	../'${newfile}'_otu_table_fungi.txt /taxdump/rankedlineage.dmp; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
@@ -632,7 +632,7 @@ then
 
 	#Assign taxonomy to OTUS using blast method on QIIME. Use the file .otus.fa. from UPARSE as input file and UNITE as reference database (Download UNITE database HERE)
 	echo "Running the Qiime Container - assign_taxonomy.py: "
-	docker exec -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/*'${SIMILARITY_INT}'*.txt \
 	-r /database/*'${SIMILARITY_INT}'*.fasta --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
@@ -642,7 +642,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiimeecho "Running the QiimePipe Container - createAbundanceFile.py: "
 	echo "Running the QiimePipe Container - createAbundanceFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createAbundanceFile.py ../output/'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_otu_table.txt;\
 	chmod -R 777 ../diversity_by_sample'
 	#python ${SCRIPT_PATH}/createAbundanceFile.py ../output/${newfile}_otus_tax_assignments.txt ../${newfile}_otu_table.txt
@@ -665,7 +665,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT';\
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT';\
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -681,7 +681,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
 	python3.6 /qiimepipe/create_otuTaxAssignment.py ../'${newfile}'_blast_ncbi.log \
 	../'${newfile}'_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
 	#python ${SCRIPT_PATH}/create_otuTaxAssignment.py ../${newfile}_blast_ncbi.log ../${newfile}_otu_table.txt ncbi_otus_tax_assignments.txt
@@ -690,7 +690,7 @@ then
 
 	#Filterin out the OTUs classified as Fungi
 	echo "Running the QiimePipe Container - filterOTUs.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	python3.6 /qiimepipe/filterOTUs.py '${newfile}'_otus.fasta diversity_by_sample_ncbi/ncbi_otus_tax_assignments.txt; \
 	chmod 777 k__Fungi.* '${newfile}'_otus_filtered.fasta'
 	#python ${SCRIPT_PATH}/filterOTUs.py ${newfile}_otus.fasta diversity_by_sample_ncbi/ncbi_otus_tax_assignments.txt
@@ -699,7 +699,7 @@ then
 	#blastn -query ${newfile}_otus_filtered.fasta -task megablast -db $DATABASE -max_target_seqs 1 -parse_deflines -num_threads 24 -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $DATABASE -max_target_seqs 1 -parse_deflines -num_threads 24 -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus_filtered.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -709,7 +709,7 @@ then
 
 	#Map reads back to OTU database <<<VSEARCH script>>>
 	echo "Running the VSEARCH Container - --usearch_global: "
-	docker exec -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global ../'${RAWDATA}' --db '${newfile}'_otus_filtered.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map_plants.uc; \
 	chmod 777 '${newfile}'_map_plants.uc;'
@@ -717,7 +717,7 @@ then
 
 	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 	echo "Running the QiimePipe Container - uc2otutab: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map_plants.uc > '${newfile}'_otu_table_plants.txt;\
 	chmod 777 '${newfile}'_otu_table_plants.txt'
 	#python ${BMP_PATH}/uc2otutab.py ${newfile}_map_fungi.uc > ${newfile}_otu_table_fungi.txt
@@ -727,7 +727,7 @@ then
 	cd diversity_by_sample
 
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast_plants.log \
 	../'${newfile}'_otu_table_plants.txt /taxdump/rankedlineage.dmp; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
@@ -770,7 +770,7 @@ then
 	# 	'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
@@ -786,7 +786,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /taxdump/rankedlineage.dmp; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
@@ -815,7 +815,7 @@ then
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
 	#assign_taxonomy.py -i ${newfile}_otus.fasta -o output -t ${COI_BOLD_DB}_tax.txt -r ${COI_BOLD_DB}.fasta --similarity=$SIMILARITY_ASSIGN
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /coibold/*.fasta -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
@@ -831,7 +831,7 @@ then
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile_flex.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile_flex.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /coibold/*_tax.txt; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_taxon_red_flagged.txt'
@@ -862,7 +862,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /blastdb/nt -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads '$THREADS' \
@@ -878,7 +878,7 @@ then
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /taxdump/rankedlineage.dmp; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
@@ -901,7 +901,7 @@ else
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /gene/*.fasta -perc_identity \
 		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
@@ -916,7 +916,7 @@ else
 	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile_flex.py: "
-	docker exec -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
+	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile_flex.py ../'${newfile}'_blast.log \
 	../'${newfile}'_otu_table.txt /gene/*_tax.txt; \
 	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt ../'${newfile}'_taxon_red_flagged.txt'
@@ -938,14 +938,14 @@ echo "Creating a Biom-Format Container: "
 docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name biomformat_run_$TIMESTAMP itvdsbioinfo/pimba_biom:v2.1.10
 
 echo "Running the Biom-Format Container - convert: "
-docker exec -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 biom convert -i '${newfile}'_otu_table.txt -o '${newfile}'_otu_table.biom \
 --table-type="OTU table" --to-json; chmod 777 '${newfile}'_otu_table.biom;'
 #biom convert -i ${newfile}_otu_table.txt -o ${newfile}_otu_table.biom --table-type="OTU table" --to-json
 
 #Add metadata (taxonomy) to OTU table
 echo "Running the Biom-Format Container - add-metadata: "
-docker exec -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 biom add-metadata -i '${newfile}'_otu_table.biom -o '${newfile}'_otu_table_tax.biom \
 --observation-metadata-fp output/'${newfile}'_otus_tax_assignments.txt --observation-header OTUID,taxonomy,confidence \
 --sc-separated taxonomy --float-fields confidence; chmod 777 '${newfile}'_otu_table_tax.biom;'
@@ -953,7 +953,7 @@ biom add-metadata -i '${newfile}'_otu_table.biom -o '${newfile}'_otu_table_tax.b
 
 # Check OTU Table  on QIIME.
 echo "Running the Biom-Format Container - summarize-table: "
-docker exec -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+docker exec -u $(id -u) -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 biom summarize-table -i '${newfile}'_otu_table_tax.biom -o '${newfile}'_biom_table; \
 chmod 777 '${newfile}'_biom_table;'
 #biom summarize-table -i ${newfile}_otu_table_tax.biom -o ${newfile}_biom_table

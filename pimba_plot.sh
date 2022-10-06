@@ -97,7 +97,7 @@ echo "Creating a Phyloseq Container: "
 docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name phyloseq itvdsbioinfo/pimba_phyloseq:latest bash
 
 echo "Running the Phyloseq Container: "
-docker exec -i phyloseq /bin/bash -c 'cd /output/plots; \
+docker exec -u $(id -u) -i phyloseq /bin/bash -c 'cd /output/plots; \
 	Rscript /data/Phyloseq_pimba.R /common/'${OTU_TABLE}' /common/'${PLOT_TAX}' /common/'${METADATA}' '$GROUPBY'; \
 	chmod -R 777 /output/plots;'
 
