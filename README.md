@@ -145,6 +145,26 @@ After that, all you need is set the /path/to/your/database/ in the -g parameter 
 ./pimba_run.sh -i AllSamplesCOI_chip1234_good.fasta -o AllSamplesCOI_98clust90assign -w otu -s 0.98 -a 0.9 -c 0.9 -l 130 -h 1 -g /path/to/your/database/ -t 24 -e 0.1 -d databases.txt
 ~~~
 
+## Use files from previous run to search in other reference databases (pimba_tax.sh)
+Suppose you have already run pimba_run in your dataset from 16S genemarker, using the SILVA database. 
+Now you can easily run the analisys choosing a different database (e.g, 16S-GREENGENES) and reusing the previously generated FASTA file with the OTUs/ASVs and the text file with the Taxon table;
+
+~~~
+./pimba_tax.sh -i otus.fasta -u otu_table.txt -o AllSamplesCOI_98clust90assign -a 0.9 -c 0.9 -h 1 -g 16S-GREENGENES -t 24 -e 0.1 -d databases.txt
+~~~
+
+-i <otus_fasta> = FASTA file with otus;\
+-u <otu_table> = otu/asv table;\
+-o <output_dir> = Directory where the results will be stored;\
+-a <assign_similarity> = Percentage of similarity that will be used in the taxonomy assignment. Default is 0.9;\
+-c <coverage> = minimum converage for the alignment. Default is 0.9;\
+-h <hits_per_subject> = if 1, choose the best hit. If > 1, choose by majority. Default is 1;\
+-g <marker_gene> = Marker gene and Database of the analisys. It can be: (16S-SILVA, 16S-GREENGENES, 16S-RDP, 16S-NCBI, ITS-FUNGI-NCBI, ITS-FUNGI-UNITE, ITS-PLANTS-NCBI, COI-NCBI, COI-BOLD);\
+-t <num_threads> = Number or threads to use in the blast step. Default is 1;\
+-e <E-value> = Expected value used by blast. Dafault is 0.00001;\
+-d <databases_file.txt> = File with the databases path.\
+
+
 ## Plot your results (pimba_plot.sh)
 When finished with pimba_run.sh, you will be able to generate some basic plots for your results, such as PCoA, rarefaction curves, alpha and beta diversity plots.
 All your need will be two files that pimba_run.sh will generate and one metadata file that you will have to provide.
