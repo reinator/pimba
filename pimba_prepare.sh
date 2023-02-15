@@ -1,6 +1,7 @@
+#!/bin/bash
 #Authors: Renato Oliveira. Gisele Nunes, Raíssa Oliveira
-#version: 1.7
-#Date: 02-03-2021
+#version: 1.8
+#Date: 07-02-2023
 
 ###    Copyright (C) 2021  Renato Oliveira
 ###
@@ -21,7 +22,7 @@
 ###    guilherme.oliveira@itv.org
 ###    renato.renison@gmail.com
 
-#!/bin/bash
+
 #usage: ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt> <min_length> <min_phred>
 #<rawdata_dir> = path with all the R1 and R2 reads file;
 #<output_reads> = name for the output file;
@@ -70,8 +71,8 @@ then
 	MINLENGTH=$6
 	MINPHRED=$7
 
-	DIR_NAME_RAW=$(dirname ${RAWDATADIR}/*)
-	cd $DIR_NAME_RAW
+	#DIR_NAME_RAW=$(dirname ${RAWDATADIR}/*)
+	cd $RAWDATADIR
 	FULL_PATH_RAW=$(pwd)
 	cd $CURRENT_PATH
 
