@@ -82,7 +82,10 @@ FULL_PATH_META=$(pwd)
 
 cd $CURRENT_PATH
 
-COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
+pathlist=$(echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META)
+COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+
+#COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
 OTU_TABLE=$(echo ${FULL_PATH_OTU#"$COMMON_PATH"})/$(basename $OTU_TABLE)
 PLOT_TAX=$(echo ${FULL_PATH_TAX#"$COMMON_PATH"})/$(basename $PLOT_TAX)
