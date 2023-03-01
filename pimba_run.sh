@@ -46,6 +46,8 @@ SIMILARITY=0.97
 SIMILARITY_ASSIGN=0.9
 SIMILARITY_INT=$(bc -l <<<"${SIMILARITY}*100")
 SIMILARITY_INT=${SIMILARITY_INT%.*}
+SIMILARITY_INT_ASG=$(bc -l <<<"${SIMILARITY_ASSIGN}*100")
+SIMILARITY_INT_ASG=${SIMILARITY_INT_ASG%.*}
 COVERAGE=0.9
 COVERAGE_INT=$(bc -l <<<"${COVERAGE}*100")
 COVERAGE_INT=${COVERAGE_INT%.*}
@@ -95,6 +97,9 @@ SIMILARITY_INT=${SIMILARITY_INT%.*}
 
 COVERAGE_INT=$(bc -l <<<"${COVERAGE}*100")
 COVERAGE_INT=${COVERAGE_INT%.*}
+
+SIMILARITY_INT_ASG=$(bc -l <<<"${SIMILARITY_ASSIGN}*100")
+SIMILARITY_INT_ASG=${SIMILARITY_INT_ASG%.*}
 
 source $DB_FILE
 
@@ -505,7 +510,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
@@ -549,7 +554,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log'
@@ -582,7 +587,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query k__Fungi.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast_fungi.log; chmod 777 '${newfile}'_blast_fungi.log'
@@ -667,7 +672,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT';\
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log'
@@ -701,7 +706,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus_filtered.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast_plants.log; chmod 777 '${newfile}'_blast_plants.log'
@@ -772,7 +777,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
@@ -817,7 +822,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /coibold/*.fasta -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
 		'$THREADS' -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
@@ -864,7 +869,7 @@ then
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /blastdb/nt -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads '$THREADS' \
 		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
@@ -903,7 +908,7 @@ else
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 		blastn -query '${newfile}'_otus.fasta -task megablast -db /gene/*.fasta -perc_identity \
-		'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
+		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
 		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
 		'$THREADS' -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
 		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
