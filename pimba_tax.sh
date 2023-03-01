@@ -33,7 +33,7 @@
 #-t <num_threads> = Number or threads to use in the blast step. Default is 1.
 #-e <E-value> = Expected value used by blast. Dafault is 0.00001.
 #-d <databases_file.txt> = File with the databases path. Default is /bio/pimba_metabarcoding/databases.txt
-#USAGE: /bio/pimba_metabarcoding/pimba_tax.sh -i otus.fasta -u otu_table.txt -o AllSamplesCOI_98clust90assign -a 0.9 -c 0.9 -h 1 -g COI-ALL -t 24 -e 0.1 -d databases.txt
+#USAGE: ./pimba_tax.sh -i otus.fasta -u otu_table.txt -o AllSamplesCOI_98clust90assign -a 0.9 -c 0.9 -h 1 -g COI-ALL -t 24 -e 0.1 -d databases.txt
 
 #source activate qiime1
 
@@ -105,7 +105,11 @@ cd $DIR_NAME_RAW
 FULL_PATH_RAW=$(pwd)
 cd $CURRENT_PATH
 
-COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $CURRENT_PATH;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
+pathlist=$(echo $FULL_PATH_RAW; echo $CURRENT_PATH)
+COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+
+
+#COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $CURRENT_PATH;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
 echo Common Path: $COMMON_PATH
 echo Current Path: $CURRENT_PATH
