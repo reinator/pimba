@@ -81,7 +81,10 @@ then
 	FULL_PATH_ADAP=$(pwd)
 	cd $CURRENT_PATH
 
-	COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
+	pathlist=$(echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP)
+	COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+
+	#COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
 	echo Common Path: $COMMON_PATH
 	echo Current Path: $CURRENT_PATH
