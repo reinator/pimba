@@ -222,7 +222,7 @@ Example:
 #-x = File separated by tab of sequences in contraint tree and their associated taxon; \
 #-t = Number of threads to be used; \
 #-d = Type of sequences to be analyzed 'nt' or 'aa'; \
-#-o = Output directory to store the results; \
+#-o = Output directory to store the results; 
 
 The jplace file will be saved to the path output/no_clustering/placed/<input_name>.jplace\
 
