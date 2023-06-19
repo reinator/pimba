@@ -1,0 +1,9 @@
+# Used by rules in treesearch.smk
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - raxml-ng ==1.1.0
+  - ete3 ==3.1.1
+  - python ==3.10.5

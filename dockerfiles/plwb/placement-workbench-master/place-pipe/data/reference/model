@@ -1,0 +1,76 @@
+
+
+Using BFGS method to optimize GTR rate parameters, to disable this specify "--no-bfgs" 
+
+
+
+This is RAxML version 8.2.4 released by Alexandros Stamatakis on October 02 2015.
+
+With greatly appreciated code contributions by:
+Andre Aberer      (HITS)
+Simon Berger      (HITS)
+Alexey Kozlov     (HITS)
+Kassian Kobert    (HITS)
+David Dao         (KIT and HITS)
+Nick Pattengale   (Sandia)
+Wayne Pfeiffer    (SDSC)
+Akifumi S. Tanabe (NRIFS)
+
+Alignment has 3508 distinct alignment patterns
+
+Proportion of gaps and completely undetermined characters in this alignment: 62.31%
+
+RAxML Model Optimization up to an accuracy of 0.100000 log likelihood units
+
+Using 1 distinct models/data partitions with joint branch length optimization
+
+
+All free model parameters will be estimated by RAxML
+GAMMA model of rate heteorgeneity, ML estimate of alpha-parameter
+
+GAMMA Model parameters will be estimated up to an accuracy of 0.1000000000 Log Likelihood units
+
+Partition: 0
+Alignment Patterns: 3508
+Name: No Name Provided
+DataType: DNA
+Substitution Matrix: GTR
+
+
+
+
+RAxML was called as follows:
+
+raxml -f e -t /home/pierre/repos/epa/test/data/lucas/tree.newick -n neotrop -w /home/pierre/repos/epa/test/data/lucas/info -m GTRGAMMA -s /home/pierre/repos/epa/test/data/lucas/1k_reference.fasta 
+
+
+
+Model parameters (binary file format) written to: /home/pierre/repos/epa/test/data/lucas/info/RAxML_binaryModelParameters.neotrop
+
+
+Overall Time for Tree Evaluation 41.806823
+Final GAMMA  likelihood: -332101.759158
+
+Number of free parameters for AIC-TEST(BR-LEN): 1030
+Number of free parameters for AIC-TEST(NO-BR-LEN): 9
+
+
+Inference[0]: Time 123.456000 GAMMA-based likelihood -332101.759158, best rearrangement setting 10
+alpha[0]: 0.490450 rates[0] ac ag at cg ct gt: 0.942776 2.085423 1.109347 1.030108 3.354189 1.000000 
+Model Parameters of Partition 0, Name: No Name Provided, Type of Data: DNA
+alpha: 0.490450
+Tree-Length: 124.496715
+rate A <-> C: 0.942776
+rate A <-> G: 2.085423
+rate A <-> T: 1.109347
+rate C <-> G: 1.030108
+rate C <-> T: 3.354189
+rate G <-> T: 1.000000
+
+freq pi(A): 0.265881
+freq pi(C): 0.199751
+freq pi(G): 0.261436
+freq pi(T): 0.272932
+
+Final tree written to:                 /home/pierre/repos/epa/test/data/lucas/info/RAxML_result.neotrop
+Execution Log File written to:         /home/pierre/repos/epa/test/data/lucas/info/RAxML_log.neotrop

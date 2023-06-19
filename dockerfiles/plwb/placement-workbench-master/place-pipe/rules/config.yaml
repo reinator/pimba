@@ -1,0 +1,194 @@
+# =================================================================================================
+#     Input Data
+# =================================================================================================
+
+# Set the input data, using absolute file paths (relative paths do not work well with some
+# of the snakemake tools we are using in the pipeline, such as shadow directories).
+data:
+
+  # Table of input files. Must contain the header "sample\tinput_file"
+  # This file can contain per-sample paths to fasta/fastq files containing the query sequences
+  samples: "data/samples.tsv"
+
+  # Reference tree in newick format.
+  reference-tree: "data/reference/tree.newick"
+
+  # Reference alignment, preferrably in fasta format, but currently, any format that is accepted
+  # by hmmbuild also works here.
+  # TODO might need to change this once we allow for different alignment tools as well!
+  # Needs to contain the same sequences (by name) as the reference tree above.
+  reference-alignment: "data/reference/seqs.fasta"
+
+  # OPTIONAL File containing a tab-separated list of reference taxon to taxonomic string assignments, as
+  # used by 'gappa assign'. If provided, taxonomic assignment is added as an output
+  # taxonomy-file: "data/reference/taxopaths.tsv"
+  taxonomy-file: ""
+
+# =================================================================================================
+#     Pipeline Settings
+# =================================================================================================
+
+settings:
+
+  datatype: "nt" # 'nt' for DNA, 'aa' for protein
+
+  # Select the tools used for aligning queries to the reference alignment.
+  # Valid values: "swarm" and "no_clustering"
+  clustering-tool: 
+    - "no_clustering"
+    # - "swarm"
+
+  # If set to True, we automagically run chunkify/unchunkify on the input sample fasta files.
+  # That is, we de-duplicate query sequences and re-distribute their workload to minimize cluster
+  # execution times and maximize load balance. This is recommended for large-scale projects with
+  # many samples of similar diveristy.
+  # See https://github.com/lczech/gappa/wiki/Subcommand:-chunkify for details.
+  use-chunkify: True
+
+  # Select the tool used for aligning queries to the reference alignment.
+  # Valid values: "hmmer"
+  alignment-tool: "hmmer"
+
+  # Select the tool used for phylogenetic placement.
+  # Valid values: "epa-ng"
+  placement-tool: "epa-ng"
+
+  outdir: "test"
+
+# =================================================================================================
+#     Tool Parameters
+# =================================================================================================
+
+params:
+
+  threads: 2
+
+  # ----------------------------------------------------------------------
+  #     swarm
+  # ----------------------------------------------------------------------
+
+  swarm:
+    # threads: 1
+    differences: 1
+    fastidious: True
+
+  # ----------------------------------------------------------------------
+  #     chunkify / unchunkify
+  # ----------------------------------------------------------------------
+
+  # Used only if settings: use-chunkify == True
+  # See https://github.com/lczech/gappa/wiki/Subcommand:-chunkify for details
+  chunkify:
+    # Hash function to use when hashing sequences to find duplicates.
+    # Valid values: "SHA1", "SHA256", "MD5"
+    hash-function: "SHA1"
+
+    # Chunkify. Minimum abundance of a single sequence. Sequences below are filtered out.
+    min-abundance: 1
+
+    # Chunkify. Number of sequences per chunk file.
+    chunk-size: 50000
+
+    # Unchunkify. Cache size to determine how many jplace files are kept in memory.
+    # Default (0) means all. Set this to a number greater than 0 (~100k maybe, depending on
+    # the available main mamory) if the command runs out of memory.
+    # See https://github.com/lczech/gappa/wiki/Subcommand:-unchunkify for details.
+    jplace-cache-size: 0
+
+  # ----------------------------------------------------------------------
+  #     hmmer
+  # ----------------------------------------------------------------------
+
+  # Used only if settings: alignment-tool == hmmer
+  # See hmmer manual: http://hmmer.org/documentation.html
+  hmmer:
+    # threads: 1
+    hmmbuild:
+      extra: ""
+    hmmalign:
+      trim: False
+    # Hmmsearch filters the sequences that would go into alignment to exclude those that don't
+    # align well (according to, for example, an E-Value). See the hmmsearch manual for
+    # full settings (they're pretty much all supported here)
+    hmmsearch:
+      E: 0.01
+
+
+
+  # ----------------------------------------------------------------------
+  #     raxml-ng
+  # ----------------------------------------------------------------------
+
+  raxml-ng:
+    threads: 2
+    extra: ""
+
+
+  # ----------------------------------------------------------------------
+  #     epa-ng
+  # ----------------------------------------------------------------------
+
+  # Used only if settings: placement-tool == epa-ng
+  # See epa-ng manual: https://github.com/Pbdas/epa-ng
+  epa-ng:
+    # threads: 2
+
+    # Evolutionary model and its parameters to be used for the maximum likelihood placement.
+    # This can be given either as a string following the RAxML-ng model string specification:
+    #     GTR{0.7/1.8/1.2/0.6/3.0/1.0}+FU{0.25/0.23/0.30/0.22}+G4{0.47}
+    # or it can be a filename pointing to a RAxML-ng model file (`raxml.bestModel` file).
+    # It can also be empty (default), in which case RAxML-ng is executed to evaluate the tree and
+    # obtain the best fitting model, using the model as specified below at key `model`.
+    model-params: ""
+
+    # If the above key `model-params` is left empty, we run RAxML-ng to evaluate the reference tree
+    # to obtain the best fitting model parameters automatically. For this, we need the evolutionary
+    # model that was used to infer the tree in the first place (or at least is a reasonable model
+    # for the given reference dataset). The value given here is hence only used if `model-params`
+    # is empty, and only used to run RAxML-ng to evaluate the model parameters.
+    model: "GTR+G"
+
+
+  # ----------------------------------------------------------------------
+  #     gappa
+  # ----------------------------------------------------------------------
+
+  gappa:
+    # threads: 2
+
+    # Settings for making heat trees that visualize the resulting placement files.
+    # See https://github.com/lczech/gappa/wiki/Subcommand:-heat-tree for details.
+    heat-tree:
+
+      # Produce individual heat trees per sample (if True), or just one overview tree
+      # (if False - we always produce that overview tree that shows the placement distribution
+      # of all samples combined, because that is an important quality control tool).
+      sample-trees: False
+
+      # Image file formats to produce the heat trees in.
+      # List any of "newick", "nexus", "phyloxml", "svg".
+      formats:
+        - "svg"
+        - "newick"
+
+      # All other options (all gappa examine heat-tree options are implemented!)
+      svg-tree-ladderize: True
+      min-value: 1.0
+      under-color: "#808080"
+
+    
+    # Settings for taxonomic assignment. See 
+    # https://github.com/lczech/gappa/wiki/Subcommand:-assign for details.
+    assign:
+      distant-label: False
+      resolve-missing-paths: True
+      krona: True
+ 
+
+  # ----------------------------------------------------------------------
+  #     guppy
+  # ----------------------------------------------------------------------
+
+  guppy:
+    fpd:
+      include-pendant: False

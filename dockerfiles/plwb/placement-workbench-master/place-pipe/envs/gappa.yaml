@@ -1,0 +1,6 @@
+# Used by rules in gappa.smk
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - gappa ==0.8.0

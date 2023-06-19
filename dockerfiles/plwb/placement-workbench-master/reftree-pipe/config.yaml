@@ -1,0 +1,173 @@
+# =================================================================================================
+#     Input Data
+# =================================================================================================
+
+# Set the input data, using file paths relative to the directory where this config file is located.
+data:
+
+  # Table of input files.
+  # This file can contain per-sample paths, either to fasta files, or to .csv files containing
+  # a list of accessions to be downloaded, or a combination thereof
+  samples: "data/samples.tsv"
+
+  # Optional: constrain the treesearch by a given constraint tree
+  # NOTE: labels must agree with input sequence file, but the tree does not
+  # need to contain all taxa. For details, 
+  # see https://github.com/amkozlov/raxml-ng/wiki/Input-data#topological-constraint
+
+  # constraint_tree: "data/constraint.newick"
+  constraint_tree: ""
+
+  # Optional: taxonomy file used in the PhAT algorithm
+  # taxonomy: "data/taxonomy.tsv"
+  taxonomy: ""
+
+  # customizing the structure of any input csv files containing a list of accessions to be downloaded
+  accession_file_structure:
+    # name of the .csv column that contains the accessions
+    accession_column: "accession"
+    # name of the .csv column that contains the taxon label (i.e. what the accession ID gets replaced
+    # with before the tree is generated from it)
+    label_column: "label"
+  
+  # Indicate whether the different samples will result in compatible trees. WARNING this WILL
+  # cause the run to fail if it isn't actually the case, as then the pipeline will try to do
+  # operations that only work on compatible trees (e.g., 'rf_distances_between_samples')
+  trees_are_compatible: False
+
+# =================================================================================================
+#     Pipeline Settings
+# =================================================================================================
+
+settings:
+
+  # Select tools for autoref handling. For now, only the PhAT algorithm is supported. Requires
+  # data/taxonomy to be set to a valid file. Consider changing the desired target number of taxa
+  # the algorithm should aim for under params/gappa/phat/target_number
+  autoref:
+    - "phat"
+
+  # Whether or not to skip autoreffing. Overrides the settings/autoref values
+  skip_autoref: True
+
+  # If set to True, the files in the above samples table are assumed to already be aligned,
+  # and the below list of alignment tools is not used.
+  skip_alignment: False
+
+  datatype: "nt" # 'nt' for DNA, 'aa' for protein
+
+  # Select the tool(s) used for sequence alignment.
+  # Valid values: "mafft", "muscle"
+  aligner:
+    - "mafft"
+    # - "muscle"
+
+  trimmer:
+    # - "trimal"
+    - "no_trim"
+    # - "gblocks"
+
+
+  outdir: "test"
+# =================================================================================================
+#     Tool Parameters
+# =================================================================================================
+
+params:
+
+  # ======================================================================
+  #     General, across-tool settings
+  # ======================================================================
+
+  # note: these general options can be overridden on a tool by tool basis
+
+  threads: 4
+
+  # ----------------------------------------------------------------------
+  #     Treesearch-related settings
+  # ----------------------------------------------------------------------
+
+  # substitution model to be used. Defaults if unset:
+  # GTR+G (for datatype='nt'), LG+G (for datatype='aa')
+  # If set to 'auto', use modeltest to determine the best model
+  model: ""
+
+  # number of starting trees
+  parsimony-starting-trees: 10
+  random-starting-trees: 10
+  # number of bootstrap trees. When used with auto_bootstrap=True, this becomes the upper limit of bs trees
+  bs-trees: 100
+  # should the number of bootstrap trees be automatically determined?
+  auto-bootstrap: True
+
+  # ----------------------------------------------------------------------
+  #     Alignment-specific settings
+  # ----------------------------------------------------------------------
+
+  # trim leading/trailing columns that contain fewer than n non-gap characters
+  # (meaning a value of 0 disables the trimming)
+  trim-ends-n: 4
+
+  # ======================================================================
+  #     Tool specific settings
+  # ======================================================================
+
+  # ----------------------------------------------------------------------
+  #     gappa
+  # ----------------------------------------------------------------------
+
+  gappa:
+    phat:
+      target-size: 512
+
+  # ----------------------------------------------------------------------
+  #     mafft
+  # ----------------------------------------------------------------------
+
+  mafft:
+    # threads: 4
+    auto: True
+    maxiterate: 1000
+
+  # ----------------------------------------------------------------------
+  #     muscle
+  # ----------------------------------------------------------------------
+
+  # muscle:
+
+  # ----------------------------------------------------------------------
+  #     ModelTest-ng
+  # ----------------------------------------------------------------------
+
+  # modeltest-ng:
+
+  # ----------------------------------------------------------------------
+  #     RAxML-ng
+  # ----------------------------------------------------------------------
+
+  raxml-ng:
+    treesearch:
+      # branch support metric: fbp = Felsenstein bootstrap (default), tbe = transfer distance
+      bootstrap-metric: "fbp"
+    # rfdist:
+  
+  # ----------------------------------------------------------------------
+  #     IQTree
+  # ----------------------------------------------------------------------
+
+  iqtree:
+    extra: ""
+
+  # ----------------------------------------------------------------------
+  #     Gblocks
+  # ----------------------------------------------------------------------
+
+  gblocks:
+    extra: ""
+
+  # ----------------------------------------------------------------------
+  #     trimal
+  # ----------------------------------------------------------------------
+
+  trimal:
+    automated1: True

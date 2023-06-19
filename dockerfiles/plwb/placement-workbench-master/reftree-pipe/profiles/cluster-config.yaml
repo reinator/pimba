@@ -1,0 +1,14 @@
+__default__:
+  time: "24:00:00"
+  mem: 10G
+  cpus-per-task: 1
+  nodes: 1
+  ntasks: 1
+
+treesearch:
+  mem: 32G
+  time: "24:00:00"
+  cpus-per-task: 32
+  tasks-per-node: 1
+  ntasks: 1
+  nodes: 1

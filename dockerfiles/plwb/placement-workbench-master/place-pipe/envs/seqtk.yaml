@@ -1,0 +1,7 @@
+# Used by rules in cluster.smk
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - seqtk ==1.3
+  

@@ -1,0 +1,6 @@
+# Used by rules in place-epa-ng.smk
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - raxml-ng ==1.1.0

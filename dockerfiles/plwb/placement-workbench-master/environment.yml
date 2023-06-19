@@ -1,0 +1,8 @@
+name: plwb
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - snakemake ==7.12.1
+  - pandas ==1.4.0
