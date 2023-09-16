@@ -63,6 +63,13 @@ sed -i -e 's/ o__//g' $PLOT_TAX
 sed -i -e 's/ f__//g' $PLOT_TAX
 sed -i -e 's/ g__//g' $PLOT_TAX
 sed -i -e 's/ s__//g' $PLOT_TAX
+sed -i -e 's/D_0__//g' $PLOT_TAX
+sed -i -e 's/D_1__//g' $PLOT_TAX
+sed -i -e 's/D_2__//g' $PLOT_TAX
+sed -i -e 's/D_3__//g' $PLOT_TAX
+sed -i -e 's/D_4__//g' $PLOT_TAX
+sed -i -e 's/D_5__//g' $PLOT_TAX
+sed -i -e 's/D_6__//g' $PLOT_TAX
 sed -i -e 's/Unassigned/Unassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned\tUnassigned/g' $PLOT_TAX
 
 
@@ -86,6 +93,9 @@ cd $CURRENT_PATH
 
 pathlist=$(echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META)
 COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+
+echo Common Path: $COMMON_PATH
+echo Current Path: $CURRENT_PATH
 
 #COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
