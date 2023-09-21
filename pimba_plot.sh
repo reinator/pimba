@@ -32,6 +32,8 @@
 #SCRIPT_PATH=/bio/share_bio/utils/renato/QiimePipe
 #SCRIPT_PATH=/home/pbd001/ITV/PIMBA/lulu_dada_phyloseq/Renato/Renato/Phyloseq_data_script
 
+GROUPBY=FALSE
+
 while getopts "t:a:m:g:" opt; do
 	case $opt in
 		t) OTU_TABLE="$OPTARG"
@@ -54,7 +56,16 @@ PLOT_TAX=${DIR_TAX}/plot_${FILE_TAX}
 
 chmod +x $OTU_TABLE $TAX_ASSIGNMENT $METADATA
 
-sed -i '1s/^/otu_id\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\tsimilarity\n/' $PLOT_TAX
+COLUMNS=$(head -1 $PLOT_TAX | sed -e 's/[^\t]//g' | wc -c)
+
+if [ $COLUMNS -gt 3 ]; 
+then 
+	sed -i '1s/^/otu_id\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\tsimilarity\taux\n/' $PLOT_TAX;
+else
+	sed -i '1s/^/otu_id\tkingdom\tphylum\tclass\torder\tfamily\tgenus\tspecies\tsimilarity\n/' $PLOT_TAX;
+
+fi
+
 sed -i -e 's/;/\t/g' $PLOT_TAX
 sed -i -e 's/k__//g' $PLOT_TAX
 sed -i -e 's/ p__//g' $PLOT_TAX
@@ -96,6 +107,11 @@ COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$
 
 echo Common Path: $COMMON_PATH
 echo Current Path: $CURRENT_PATH
+
+if [ -z $COMMON_PATH ]; 
+then 
+	COMMON_PATH=$(echo $FULL_PATH_OTU); 
+fi
 
 #COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
