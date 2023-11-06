@@ -1,7 +1,7 @@
 #!/bin/bash
 #Authors: Renato Oliveira
 #version: 2.0
-#Date: 07/06/2023
+#Date: 06/11/2023
 
 ###    Copyright (C) 2023  Renato Oliveira
 ###
@@ -22,7 +22,7 @@
 ###    renato.renison@gmail.com
 
 
-##usage: ./pimba_plwb.sh -i <fasta_query> -c <constraint_tree> -a <constraint_alignment> -x <taxonomy_file> -t <num_threads> -d <nt_or_aa> -o <outdir>
+##usage: ./pimba_place.sh -i <fasta_query> -c <constraint_tree> -a <constraint_alignment> -x <taxonomy_file> -t <num_threads> -d <nt_or_aa> -o <outdir>
 #-i = Inputa FASTA file with query sequences to be placed;
 #-c = Constraint tree in newick format;
 #-a = Aligned FASTA file of sequences in contraint tree;
