@@ -76,17 +76,17 @@ then
 	FULL_PATH_RAW=$(pwd)
 	cd $CURRENT_PATH
 
-	DIR_NAME_ADAP=$(dirname $ADAPTERS)
-	cd $DIR_NAME_ADAP
-	FULL_PATH_ADAP=$(pwd)
+	REALPATH_ADAP=$(realpath $ADAPTERS)
+	DIR_NAME_ADAP=$(dirname $REALPATH_ADAP)
+	FILENAME_ADAP=$(basename $REALPATH_ADAP)
 	cd $CURRENT_PATH
 
-	pathlist=$(echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP)
-	COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+	#pathlist=$(echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP)
+	#COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
 
 	#COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
-	echo Common Path: $COMMON_PATH
+	#echo Common Path: $COMMON_PATH
 	echo Current Path: $CURRENT_PATH
 
 
@@ -104,12 +104,12 @@ then
 
 	#Removing adapters and filtering sequences by quality
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/adapter_removal/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $DIR_NAME_ADAP:/adapter/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
-	docker exec -u $(id -u) -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'ADAPTERS='$ADAPTERS'; FULL_PATH_ADAP='$FULL_PATH_ADAP'; COMMON_PATH='$COMMON_PATH'; cd /output/prepare_output/;\
+	docker exec -u $(id -u) -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'ADAPTERS='$FILENAME_ADAP'; cd /output/prepare_output/;\
 	 for i in R1/*.fastq; do newfile=${i%%_*}; newfile=${newfile##*/}; echo $newfile;\
-	 AdapterRemoval --file1 $i --file2 R2/${newfile}* --threads '$NUM_THREADS' --mate-separator " " --adapter-list /adapter_removal/$(echo ${FULL_PATH_ADAP#"$COMMON_PATH"})/$(basename $ADAPTERS) \
+	 AdapterRemoval --file1 $i --file2 R2/${newfile}* --threads '$NUM_THREADS' --mate-separator " " --adapter-list /adapter/${ADAPTERS} \
 	  --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
 	  rm -r R1/ R2/; chmod -R 777 /output/prepare_output/;'
 
