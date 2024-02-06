@@ -113,11 +113,11 @@ then
 	  --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
 	  rm -r R1/ R2/; chmod -R 777 /output/prepare_output/;'
 
-    mkdir -p assemblies/pear
-    cd assemblies/pear
+	mkdir -p assemblies/pear
+	cd assemblies/pear
 
-    echo "Creating a PEAR Container: "
-	docker run -id -v $COMMON_PATH:/pear/ -v $CURRENT_PATH:/output/ --name pear_prepare_$TIMESTAMP itvdsbioinfo/pimba_pear:v0.9.10
+	echo "Creating a PEAR Container: "
+	docker run -id -v $CURRENT_PATH:/output/ --name pear_prepare_$TIMESTAMP itvdsbioinfo/pimba_pear:v0.9.10
 
 	echo "Running the PEAR Container: "
 	docker exec -u $(id -u) -i pear_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/assemblies/pear/;\
@@ -130,7 +130,7 @@ then
 	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; docker run -u $(id -u) -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${i} -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled; done;
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
 	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/assemblies/pear/;\
@@ -244,7 +244,7 @@ then
 	chmod -R 777 ../prepare_output
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
 	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
@@ -269,7 +269,7 @@ then
 	chmod 777 ${OUTPUT_NAME}.fastq
 
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
 	docker exec -u $(id -u) -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/prepare_output/;\
@@ -343,7 +343,7 @@ then
 	chmod -R 777 ${OUTPUT_NAME}.fastq
 
 	echo "Creating an AdapterRemoval Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
+	docker run -id -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3
 
 	echo "Running the AdapterRemoval Container: "
 	docker exec -u $(id -u) -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'cd /output/prepare_output/;\
@@ -353,7 +353,7 @@ then
 	# for i in ${PREFIX}_*fastq; do newfile="$(basename $i .fastq)"; echo working with $i; AdapterRemoval --file1 $i --threads 1 --minlength 50 --basename ${newfile}_min; 
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
 	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
