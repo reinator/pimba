@@ -30,6 +30,11 @@ def check_majority(organism_list, identity_list, taxid_list):
 			max_i = i
 
 	#print(max_i)
+	if(taxid_list[max_i].find("gb|") != -1):
+		taxid_list[max_i] = taxid_list[max_i][3:-1]
+	if(taxid_list[max_i].find("ref|" || "emb|") != -1):
+		taxid_list[max_i] = taxid_list[max_i][4:-1]
+
 	return organism_list[max_i], identity_list[max_i], taxid_list[max_i]
 
 def check_uncultered(organism_list, identity_list, taxid_list):
@@ -66,6 +71,7 @@ def createDicBlast(blastTable):
 		identity_list = [line[5]]
 		#taxid_list = [line[3][0]]
 		taxid_list = [line[2]]
+
 		if(i+1!=len(lines)):
 			new_otuid = lines[i+1].split("\t")[0]
 			if(new_otuid.find("gb|") != -1):
