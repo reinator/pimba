@@ -111,12 +111,12 @@ FULL_PATH_RAW=$(pwd)
 cd $CURRENT_PATH
 
 pathlist=$(echo $FULL_PATH_RAW; echo $CURRENT_PATH)
-COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+#COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
 
 
 #COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $CURRENT_PATH;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
-echo Common Path: $COMMON_PATH
+#echo Common Path: $COMMON_PATH
 echo Current Path: $CURRENT_PATH
 
 mkdir $OUTPUT
@@ -130,18 +130,18 @@ newfile="$(basename $RAWDATA .fasta)"
 
 #Dereplication <<<USING USEARCH 7>>>
 echo "Creating a VSEARCH Container: "
-docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
+docker run -id -v $CURRENT_PATH:/output/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
 
 #Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 echo "Creating a QiimePipe Container: "
-docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 
 
 if [ $GENE = "16S-SILVA" ];
 then
 	echo "Creating a Qiime Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $SILVA_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $SILVA_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
 
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
@@ -192,7 +192,7 @@ elif [ $GENE = "16S-GREENGENES" ];
 then
 
 	echo "Creating a Qiime Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $GG_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $GG_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
 
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
@@ -241,7 +241,7 @@ elif [ $GENE = "16S-RDP" ];
 then
 
 	echo "Creating a Qiime Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $RDP_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $RDP_DB_16S:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
 
 
 	#Assign taxonomy to OTUS using blast method on QIIME
@@ -296,7 +296,7 @@ then
 	#export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
@@ -312,7 +312,7 @@ then
 
 	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
@@ -340,7 +340,7 @@ then
 	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
@@ -356,7 +356,7 @@ then
 	cd diversity_by_sample_ncbi
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
@@ -424,7 +424,7 @@ then
 
 
 	echo "Creating a Qiime Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $ITS_UNITE_DB:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $ITS_UNITE_DB:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
 
 	#Assign taxonomy to OTUS using blast method on QIIME. Use the file .otus.fa. from UPARSE as input file and UNITE as reference database (Download UNITE database HERE)
 	echo "Running the Qiime Container - assign_taxonomy.py: "
@@ -458,7 +458,7 @@ then
 	#export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT';\
@@ -473,7 +473,7 @@ then
 	cd diversity_by_sample_ncbi
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
@@ -555,7 +555,7 @@ then
 	#export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	# echo "Running the BLAST Container - blastn: "
 	# docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/; \
@@ -578,7 +578,7 @@ then
 	cd diversity_by_sample
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
@@ -605,7 +605,7 @@ then
 
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $COI_BOLD_DB:/coibold/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $COI_BOLD_DB:/coibold/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
@@ -623,7 +623,7 @@ then
 	cd diversity_by_sample
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $COI_BOLD_DB:/coibold/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $COI_BOLD_DB:/coibold/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile_flex.py: "
@@ -655,7 +655,7 @@ then
 	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
@@ -671,7 +671,7 @@ then
 
 	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $TAXDUMP:/taxdump/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile.py: "
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
@@ -694,7 +694,7 @@ else
 	
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
@@ -709,7 +709,7 @@ else
 	cd diversity_by_sample
 	#Generate individual diversity information for each sample in the data and convert the blast file to otu_tax_assignment file from Qiime
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container - createTaxonTable_singleFile_flex.py: "
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
@@ -731,7 +731,7 @@ fi
 
 #Convert otu_table.txt to otu-table.biom, used by QIIME <<< BIOM SCRIPT>>>
 echo "Creating a Biom-Format Container: "
-docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name biomformat_run_$TIMESTAMP itvdsbioinfo/pimba_biom:v2.1.10
+docker run -id -v $CURRENT_PATH:/output/ --name biomformat_run_$TIMESTAMP itvdsbioinfo/pimba_biom:v2.1.10
 
 echo "Running the Biom-Format Container - convert: "
 docker exec -u $(id -u) -i biomformat_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
