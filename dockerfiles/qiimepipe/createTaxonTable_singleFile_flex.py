@@ -32,7 +32,7 @@ def check_majority(organism_list, identity_list, taxid_list):
 	#print(max_i)
 	if(taxid_list[max_i].find("gb|") != -1):
 		taxid_list[max_i] = taxid_list[max_i][3:-1]
-	if(taxid_list[max_i].find("ref|" || "emb|") != -1):
+	if(taxid_list[max_i].find("ref|") != -1 or taxid_list[max_i].find("emb|") != -1):
 		taxid_list[max_i] = taxid_list[max_i][4:-1]
 
 	return organism_list[max_i], identity_list[max_i], taxid_list[max_i]
