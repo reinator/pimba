@@ -102,6 +102,8 @@ then
 	cd ../../
 	chmod -R 777 prepare_output
 
+	echo DIR_NAME_ADAP: $DIR_NAME_ADAP
+
 	#Removing adapters and filtering sequences by quality
 	echo "Creating an AdapterRemoval Container: "
 	docker run -id -v $DIR_NAME_ADAP:/adapter/ -v $CURRENT_PATH:/output/ --name adapter_removal_prepare_$TIMESTAMP itvdsbioinfo/pimba_adapterremoval:v2.2.3

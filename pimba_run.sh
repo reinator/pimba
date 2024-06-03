@@ -116,7 +116,9 @@ source $DB_FILE
 
 CURRENT_PATH=$(pwd)
 
-DIR_NAME_RAW=$(dirname $RAWDATA)
+REALPATH_RAW=$(realpath $RAWDATA)
+DIR_NAME_RAW=$(dirname $REALPATH_RAW)
+FILE_NAME_RAW=$(basename $RAWDATA)
 cd $DIR_NAME_RAW
 FULL_PATH_RAW=$(pwd)
 cd $CURRENT_PATH
@@ -136,17 +138,17 @@ newfile="$(basename $RAWDATA .fasta)"
 
 #Dereplication <<<USING USEARCH 7>>>
 echo "Creating a VSEARCH Container: "
-docker run -id -v $CURRENT_PATH:/output/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
+docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
 
 
 if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "ITS-FUNGI-UNITE" ];
 then
 	echo  "Creating an ITSx Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
+	docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
 
 	echo  "Running the ITSx Container: "
 	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		ITSx -i '../${RAWDATA}' -o '${newfile}_itsx' -t f \
+		ITSx -i /rawdata/'${FILE_NAME_RAW}' -o '${newfile}_itsx' -t f \
 		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
 
 	cat *_itsx.ITS1.fasta *_itsx.ITS2.fasta > ${newfile}_itsx.fasta
@@ -164,11 +166,11 @@ then
 elif [ $GENE = "ITS-PLANTS-NCBI" ];
 then
 	echo  "Creating an ITSx Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
+	docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
 
 	echo  "Running the ITSx Container: "
 	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		ITSx -i '../${RAWDATA}' -o '${newfile}_itsx' -t t \
+		ITSx -i /rawdata/'${FILE_NAME_RAW}' -o '${newfile}_itsx' -t t \
 		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
 
 
@@ -186,7 +188,7 @@ then
 else
 	echo "Running the VSEARCH Container - --derep_fulllength: "
 	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		vsearch --derep_fulllength '../${RAWDATA}' --output '${newfile}_derep.fasta' --sizeout; \
+		vsearch --derep_fulllength /rawdata/'${FILE_NAME_RAW}' --output '${newfile}_derep.fasta' --sizeout; \
 		chmod -R 777 /output/'$OUTPUT';'
 	#vsearch --derep_fulllength ../${RAWDATA} --output ${newfile}_derep.fasta --sizeout
 fi
@@ -274,7 +276,7 @@ fi
 #Map reads back to OTU database <<<VSEARCH script>>>
 echo "Running the VSEARCH Container - --usearch_global: "
 docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
-	vsearch --usearch_global ../'${RAWDATA}' --db '${newfile}'_otus.fasta --strand both \
+	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map.uc --threads '$THREADS' ; \
 	chmod 777 '${newfile}'_map.uc;'
 #vsearch --usearch_global ../${RAWDATA} --db ${newfile}_otus.fasta --strand both --id $SIMILARITY --uc ${newfile}_map.uc
@@ -599,7 +601,7 @@ then
 	#Map reads back to OTU database <<<VSEARCH script>>>
 	echo "Running the VSEARCH Container - --usearch_global: "
 	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
-	vsearch --usearch_global ../'${RAWDATA}' --db k__Fungi.fasta --strand both \
+	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db k__Fungi.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map_fungi.uc; \
 	chmod 777 '${newfile}'_map_fungi.uc;'
 	#vsearch  --usearch_global ../${RAWDATA} --db k__Fungi.fasta --strand both --id $SIMILARITY --uc ${newfile}_map_fungi.uc
@@ -718,7 +720,7 @@ then
 	#Map reads back to OTU database <<<VSEARCH script>>>
 	echo "Running the VSEARCH Container - --usearch_global: "
 	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
-	vsearch --usearch_global ../'${RAWDATA}' --db '${newfile}'_otus_filtered.fasta --strand both \
+	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus_filtered.fasta --strand both \
 	--id '$SIMILARITY' --uc '${newfile}'_map_plants.uc; \
 	chmod 777 '${newfile}'_map_plants.uc;'
 	#vsearch  --usearch_global ../${RAWDATA} --db k__Fungi.fasta --strand both --id $SIMILARITY --uc ${newfile}_map_fungi.uc
