@@ -393,5 +393,6 @@ then
 	docker rm qiimepipe_prepare_$TIMESTAMP
 
 	echo "Done!"
-
+else
+	echo "Invalid parameter $1"
 fi
