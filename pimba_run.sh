@@ -36,6 +36,7 @@
 #-e <E-value> = Expected value used by blast. Dafault is 0.00001.
 #-d <databases_file.txt> = File with the databases path. Default is /bio/pimba_metabarcoding/databases.txt
 #-x <lulu> = if set as 'lulu', PIMBA will discard erroneous OTUs or ASVs with LULU. Default is not to use LULU.
+#-m <its> = if set as 'its', PIMBA will run the ITSx tool to extract only the intergenic regions and discard ribosomal data.
 #USAGE: /bio/pimba_metabarcoding/pimba_run.sh -i AllSamplesCOI_chip1234_good.fasta -o AllSamplesCOI_98clust90assign -s 0.98 -a 0.9 -c 0.9 -l 130 -h 1 -g COI-ALL -t 24 -e 0.1 -d databases.txt -x lulu
 
 #source activate qiime1
@@ -57,9 +58,10 @@ EVALUE=0.00001
 APPROACH=otu
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 LULU=no
+ITS=no
 #DB_FILE=/bio/pimba_metabarcoding/databases.txt
 
-while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:" opt; do
+while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:m:" opt; do
 	case $opt in
 		i) RAWDATA="$OPTARG"
 		;;
@@ -86,6 +88,8 @@ while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:" opt; do
         d) DB_FILE="$OPTARG"
         ;;
         x) LULU="$OPTARG"
+        ;;
+        m) ITS="$OPTARG"
         ;;
 		\?) echo "Invalid option -$OPTARG" >&2
     	;;
@@ -170,7 +174,29 @@ then
 
 	echo  "Running the ITSx Container: "
 	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		ITSx -i /rawdata/'${FILE_NAME_RAW}' -o '${newfile}_itsx' -t t \
+		ITSx -i /rawdata/'${FILE_NAME_RAW}' -o '${newfile}_itsx' -t t,b \
+		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
+
+
+	cat *_itsx.ITS1.fasta *_itsx.ITS2.fasta > ${newfile}_itsx.fasta
+	chmod 777 ${newfile}_itsx.fasta
+
+	echo "Running the VSEARCH Container - --derep_fulllength: "
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+		vsearch --derep_fulllength '${newfile}_itsx.fasta' --output '${newfile}_derep.fasta' --sizeout; \
+		chmod -R 777 /output/'$OUTPUT';'
+	#vsearch --derep_fulllength ../${RAWDATA} --output ${newfile}_derep.fasta --sizeout
+
+	docker stop itsx_run_$TIMESTAMP
+	docker rm itsx_run_$TIMESTAMP
+elif [ $ITS = "its" ];
+then
+	echo  "Creating an ITSx Container: "
+	docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name itsx_run_$TIMESTAMP metashot/itsx:1.1.2-1
+
+	echo  "Running the ITSx Container: "
+	docker exec -u $(id -u) -i itsx_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
+		ITSx -i /rawdata/'${FILE_NAME_RAW}' -o '${newfile}_itsx' -t t,b,f \
 		--cpu '$THREADS' --graphical F; chmod -R 777 /output/'$OUTPUT';'
 
 
