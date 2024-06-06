@@ -96,6 +96,8 @@ while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:m:" opt; do
 	esac
 done
 
+DATABASE_PATH=$(realpath $GENE)
+
 SIMILARITY_INT=$(bc -l <<<"${SIMILARITY}*100")
 SIMILARITY_INT=${SIMILARITY_INT%.*}
 
@@ -931,10 +933,9 @@ then
 else
 	docker stop qiimepipe_run_$TIMESTAMP
 	docker rm qiimepipe_run_$TIMESTAMP
-	
 
 	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ -v $GENE:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	docker run -id -v $CURRENT_PATH:/output/ -v $DATABASE_PATH:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
 	echo "Running the BLAST Container - blastn: "
 	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
