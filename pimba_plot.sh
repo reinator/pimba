@@ -86,38 +86,34 @@ sed -i -e 's/Unassigned/Unassigned\tUnassigned\tUnassigned\tUnassigned\tUnassign
 
 CURRENT_PATH=$(pwd)
 
-DIR_NAME_OTU=$(dirname $OTU_TABLE)
-cd $DIR_NAME_OTU
-FULL_PATH_OTU=$(pwd)
-cd $CURRENT_PATH
+FULL_PATH_OTU=$(realpath $OTU_TABLE)
+DIR_NAME_OTU=$(dirname $FULL_PATH_OTU)
+FILE_NAME_OTU=$(basename $FULL_PATH_OTU)
 
-DIR_NAME_TAX=$(dirname $TAX_ASSIGNMENT)
-cd $DIR_NAME_TAX
-FULL_PATH_TAX=$(pwd)
-cd $CURRENT_PATH
+FULL_PATH_TAX=$(realpath $PLOT_TAX)
+DIR_NAME_TAX=$(dirname $FULL_PATH_TAX)
+FILE_NAME_TAX=$(basename $FULL_PATH_TAX)
 
-DIR_NAME_META=$(dirname $METADATA)
-cd $DIR_NAME_META
-FULL_PATH_META=$(pwd)
+FULL_PATH_META=$(realpath $METADATA)
+DIR_NAME_META=$(dirname $FULL_PATH_META)
+FILE_NAME_META=$(basename $FULL_PATH_META)
 
-cd $CURRENT_PATH
+#pathlist=$(echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META)
+#COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
 
-pathlist=$(echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META)
-COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
-
-echo Common Path: $COMMON_PATH
+#echo Common Path: $COMMON_PATH
 echo Current Path: $CURRENT_PATH
 
-if [ -z $COMMON_PATH ]; 
-then 
-	COMMON_PATH=$(echo $FULL_PATH_OTU); 
-fi
+#if [ -z $COMMON_PATH ]; 
+#then 
+#	COMMON_PATH=$(echo $FULL_PATH_OTU); 
+#fi
 
 #COMMON_PATH=$({ echo $FULL_PATH_OTU; echo $FULL_PATH_TAX; echo $FULL_PATH_META;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
-OTU_TABLE=$(echo ${FULL_PATH_OTU#"$COMMON_PATH"})/$(basename $OTU_TABLE)
-PLOT_TAX=$(echo ${FULL_PATH_TAX#"$COMMON_PATH"})/$(basename $PLOT_TAX)
-METADATA=$(echo ${FULL_PATH_META#"$COMMON_PATH"})/$(basename $METADATA)
+#OTU_TABLE=$(echo ${FULL_PATH_OTU#"$COMMON_PATH"})/$(basename $OTU_TABLE)
+#PLOT_TAX=$(echo ${FULL_PATH_TAX#"$COMMON_PATH"})/$(basename $PLOT_TAX)
+#METADATA=$(echo ${FULL_PATH_META#"$COMMON_PATH"})/$(basename $METADATA)
 
 
 mkdir plots
@@ -125,11 +121,11 @@ chmod -R 777 plots
 cd plots
 
 echo "Creating a Phyloseq Container: "
-docker run -id -v $COMMON_PATH:/common/ -v $CURRENT_PATH:/output/ --name phyloseq itvdsbioinfo/pimba_phyloseq:latest bash
+docker run -id -v $DIR_NAME_OTU:/otutable/ -v $DIR_NAME_TAX:/taxtable/ -v $DIR_NAME_META:/metatable/ -v $CURRENT_PATH:/output/ --name phyloseq itvdsbioinfo/pimba_phyloseq:latest bash
 
 echo "Running the Phyloseq Container: "
 docker exec -u $(id -u) -i phyloseq /bin/bash -c 'cd /output/plots; \
-	Rscript /data/Phyloseq_pimba.R /common/'${OTU_TABLE}' /common/'${PLOT_TAX}' /common/'${METADATA}' '$GROUPBY'; \
+	Rscript /data/Phyloseq_pimba.R /otutable/'${FILE_NAME_OTU}' /taxtable/'${FILE_NAME_TAX}' /metatable/'${FILE_NAME_META}' '$GROUPBY'; \
 	chmod -R 777 /output/plots;'
 
 #Rscript ${SCRIPT_PATH}/Phyloseq_pimba.R ../${OTU_TABLE} ../plot_${TAX_ASSIGNMENT} ../${METADATA} $GROUPBY
