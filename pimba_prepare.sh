@@ -3,24 +3,24 @@
 #version: 1.8
 #Date: 07-02-2023
 
-###    Copyright (C) 2021  Renato Oliveira
+###	Copyright (C) 2021  Renato Oliveira
 ###
-###    This program is free software: you can redistribute it and/or modify
-###    it under the terms of the GNU General Public License as published by
-###    the Free Software Foundation, either version 3 of the License, or
-###    any later version.
+###	This program is free software: you can redistribute it and/or modify
+###	it under the terms of the GNU General Public License as published by
+###	the Free Software Foundation, either version 3 of the License, or
+###	any later version.
 ###
-###    This program is distributed in the hope that it will be useful,
-###    but WITHOUT ANY WARRANTY; without even the implied warranty of
-###    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-###    GNU General Public License for more details.
+###	This program is distributed in the hope that it will be useful,
+###	but WITHOUT ANY WARRANTY; without even the implied warranty of
+###	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+###	GNU General Public License for more details.
 ###
-###    You should have received a copy of the GNU General Public License
-###    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###	You should have received a copy of the GNU General Public License
+###	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ###Contacts:
-###    guilherme.oliveira@itv.org
-###    renato.renison@gmail.com
+###	guilherme.oliveira@itv.org
+###	renato.renison@gmail.com
 
 
 #usage: ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt> <min_length> <min_phred>
@@ -82,7 +82,7 @@ then
 	cd $CURRENT_PATH
 
 	#pathlist=$(echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP)
-	#COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then      echo $prev_path;      break;   else      prev_path=$path;   fi;   i=`expr $i + 1`; done);
+	#COMMON_PATH=$(i=2; while [ $i -lt 500 ]; do   path=`echo "$pathlist" | cut -f1-$i -d/ | uniq -d`;   if [ -z "$path" ];   then	  echo $prev_path;	  break;   else	  prev_path=$path;   fi;   i=`expr $i + 1`; done);
 
 	#COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_ADAP;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
@@ -128,7 +128,7 @@ then
 	 for i in */*assembled.fastq; do newfile=$(basename $i .assembled.fastq); echo $newfile;  sed -i "s/ /_/g" $i; done;\
 	 chmod -R 777 /output/assemblies/'
 
-    echo "Creating and running a Prinseq Container: "
+	echo "Creating and running a Prinseq Container: "
 	for i in */*assembled.fastq; do newfile="$(basename $i .assembled.fastq)"; echo $newfile; docker run -u $(id -u) -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/assemblies/pear/${i} -out_format 1 -seq_id Seq -out_good /output/assemblies/pear/${newfile}.assembled; done;
 
 	echo "Creating a QiimePipe Container: "
@@ -283,12 +283,12 @@ then
 	echo "Creating and running a Prinseq Container: "
 	docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/prepare_output/${OUTPUT_NAME}_good.truncated -out_format 1 -out_good /output/prepare_output/${OUTPUT_NAME}_good
 
-    rm indexcreveol* indexforbol* index_* *clipped* *min50* 
+	rm indexcreveol* indexforbol* index_* *clipped* *min50* 
 
-    docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
-    mv ${OUTPUT_NAME}_good.fasta ../
+	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
+	mv ${OUTPUT_NAME}_good.fasta ../
 
-    echo "Stopping Containeres: "
+	echo "Stopping Containeres: "
 	docker stop adapter_removal_prepare_$TIMESTAMP
 	docker stop qiimepipe_prepare_$TIMESTAMP
 
@@ -302,31 +302,30 @@ elif [ $1 = "iontorrent-singleindex" ]
 then
 
 	SEQUENCER=$1
-    RAWDATA=$2
+	RAWDATA=$2
 	PREFIX=$3
-    BARCODES_5END_TXT=$4
-    BARCODES_5END_FASTA=$5
-    ADAPTER=$6
-    NUM_THREADS=$7
-    OUTPUT_NAME=$8
+	BARCODES_5END_TXT=$4
+	BARCODES_5END_FASTA=$5
+	ADAPTER=$6
+	NUM_THREADS=$7
+	OUTPUT_NAME=$8
+	MINLENGTH=$9
+	MINPHRED=${10}
 
 
-    DIR_NAME_RAW=$(dirname $RAWDATA)
-	cd $DIR_NAME_RAW
-	FULL_PATH_RAW=$(pwd)
-	cd $CURRENT_PATH
+	REALPATH_RAW=$(realpath $RAWDATA)
+	DIR_NAME_RAW=$(dirname $REALPATH_RAW)
+	FILENAME_RAW=$(basename $REALPATH_RAW)
+	
+	REALPATH_BAR5END=$(realpath $BARCODES_5END_TXT)
+	DIR_NAME_BAR5END=$(dirname $REALPATH_BAR5END)
+	FILENAME_BAR5END=$(basename $REALPATH_BAR5END)
 
-	DIR_NAME_BAR5END=$(dirname $BARCODES_5END_TXT)
-	cd $DIR_NAME_BAR5END
-	FULL_PATH_BAR5END=$(pwd)
-	cd $CURRENT_PATH
+	REALPATH_BAR5ENDFA=$(realpath $BARCODES_5END_FASTA)
+	DIR_NAME_BAR5ENDFA=$(dirname $REALPATH_BAR5ENDFA)
+	FILENAME_BAR5ENDFA=$(basename $REALPATH_BAR5ENDFA)
 
-	DIR_NAME_BAR5ENDFA=$(dirname $BARCODES_5END_FASTA)
-	cd $DIR_NAME_BAR5ENDFA
-	FULL_PATH_BAR5ENDFA=$(pwd)
-	cd $CURRENT_PATH
-
-	COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_BAR5END; echo $FULL_PATH_BAR5ENDFA;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
+	#COMMON_PATH=$({ echo $FULL_PATH_RAW; echo $FULL_PATH_BAR5END; echo $FULL_PATH_BAR5ENDFA;} | sed -e 'N;s/^\(.*\).*\n\1.*$/\1\n\1/;D')
 
 	mkdir prepare_output
 	cd prepare_output
@@ -334,7 +333,7 @@ then
 	chmod -R 777 ../prepare_output
 
 	echo "Creating and running a fasxttoolkit Container: "
-	cat ../${RAWDATA} | docker run -u $(id -u) -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_fastxtoolkit:v0.0.14 fastx_barcode_splitter.pl --bcfile /output/${BARCODES_5END_TXT} --prefix /output/prepare_output/${PREFIX}_ --suffix .fastq --bol --exact > stats.txt
+	cat ../${RAWDATA} | docker run -u $(id -u) -i -v $CURRENT_PATH:/output/ -v $DIR_NAME_BAR5END:/bar5end/ itvdsbioinfo/pimba_fastxtoolkit:v0.0.14 fastx_barcode_splitter.pl --bcfile /bar5end/${FILENAME_BAR5END} --prefix /output/prepare_output/${PREFIX}_ --suffix .fastq --bol --exact > stats.txt
 
 	# cat $RAWDATA | fastx_barcode_splitter.pl --bcfile $BARCODES_5END_TXT --prefix ${PREFIX}_ --suffix .fastq --bol --exact > stats.txt
 
@@ -355,11 +354,11 @@ then
 	# for i in ${PREFIX}_*fastq; do newfile="$(basename $i .fastq)"; echo working with $i; AdapterRemoval --file1 $i --threads 1 --minlength 50 --basename ${newfile}_min; 
 
 	echo "Creating a QiimePipe Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
+	docker run -id -v $CURRENT_PATH:/output/ -v $DIR_NAME_BAR5ENDFA:/bar5endfa/ --name qiimepipe_prepare_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
 	echo "Running the QiimePipe Container: "
 	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP /bin/bash -c 'cd /output/prepare_output/; \
-	python3.6 /qiimepipe/fastq_strip_barcode_relabel2.py '${OUTPUT_NAME}_min.truncated' '$ADAPTER' '/output/${BARCODES_5END_FASTA}' Seq > '${OUTPUT_NAME}_clipped.fastq';\
+	python3.6 /qiimepipe/fastq_strip_barcode_relabel2.py '${OUTPUT_NAME}_min.truncated' '$ADAPTER' '/bar5endfa/${FILENAME_BAR5ENDFA}' Seq > '${OUTPUT_NAME}_clipped.fastq';\
 	chmod -R 777 /output/prepare_output/'
 
 	# /bio/share_bio/softwares/BMP_UPARSE_Scripts/fastq_strip_barcode_relabel2.py ${newfile}_min.truncated $ADAPTER $BARCODES_5END_FASTA Seq >> ${OUTPUT_NAME}.fastq; done;
@@ -379,8 +378,8 @@ then
 	echo "Creating and running a Prinseq Container: "
 	docker run -i -v $CURRENT_PATH:/output/ itvdsbioinfo/pimba_prinseq:v0.20.4 -fastq /output/prepare_output/${OUTPUT_NAME}_good.truncated -out_format 1 -out_good /output/prepare_output/${OUTPUT_NAME}_good
 
-    docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
-    mv ${OUTPUT_NAME}_good.fasta ../
+	docker exec -u $(id -u) -i qiimepipe_prepare_$TIMESTAMP  /bin/bash -c 'chmod -R 777 /output/prepare_output/'
+	mv ${OUTPUT_NAME}_good.fasta ../
 
 	# prinseq-lite.pl -fastq ${OUTPUT_NAME}_good.truncated -out_format 1 -out_good ${OUTPUT_NAME}_good
 	#mv ${OUTPUT_NAME}_good.truncated ${OUTPUT_NAME}_good.fastq
