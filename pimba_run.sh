@@ -535,7 +535,7 @@ then
 	docker rm qiimepipe_run_$TIMESTAMP
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
-	#export BLASTDB=$NCBI_DB_EXP
+	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
 	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
@@ -697,7 +697,7 @@ then
 	
 
 	#Filter out contaminants basing on ncbi/nt blast
-	#export BLASTDB=$NCBI_DB_EXP
+	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
 	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
@@ -794,7 +794,7 @@ then
 	
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
-	#export BLASTDB=$NCBI_DB_EXP
+	export BLASTDB=$NCBI_DB_EXP
 
 	echo "Creating a BLAST Container: "
 	docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
