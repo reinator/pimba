@@ -145,7 +145,7 @@ then
 
 	chmod 777 ../../${OUTPUTNAME}.fasta
 
-	for i in *relabel.fasta; do newfile=$(basename $i .relabel.fasta); mv $i ${newfile}_relabel_notSingleton.fasta; done;
+	for i in *relabel.fasta; do newfile=$(basename $i _relabel.fasta); mv $i ${newfile}_relabel_notSingleton.fasta; done;
 
 
 	#NOW GENERATING OUTPUT WITH SINGLETON READS
@@ -163,7 +163,7 @@ then
 
 	chmod 777 ../../${OUTPUTNAME}_withSingleton.fasta
 
-	for i in *relabel.fasta; do newfile=$(basename $i .relabel.fasta); mv $i ${newfile}_relabel_withSingleton.fasta; done;
+	for i in *relabel.fasta; do newfile=$(basename $i _relabel.fasta); mv $i ${newfile}_relabel_withSingleton.fasta; done;
 
 	echo "Stopping Containeres: "
 	docker stop adapter_removal_prepare_$TIMESTAMP
