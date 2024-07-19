@@ -439,8 +439,8 @@ then
 	#Assign taxonomy to OTUS using blast method on QIIME
 	echo "Running the Qiime Container - assign_taxonomy.py: "
 	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/taxonomy/${SIMILARITY_INT}_otu_taxonomy.txt \
-	-r /database/rep_set/${SIMILARITY_INT}_otus.fasta --similarity='$SIMILARITY_ASSIGN'; \
+	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/taxonomy/'${SIMILARITY_INT}'_otu_taxonomy.txt \
+	-r /database/rep_set/'${SIMILARITY_INT}'_otus.fasta --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
 	#assign_taxonomy.py -i ${newfile}_otus.fasta -o output -t ${GG_DB_16S}/taxonomy/${SIMILARITY_INT}_otu_taxonomy.txt -r ${$GG_DB_16S}/rep_set/${SIMILARITY_INT}_otus.fasta --similarity=$SIMILARITY_ASSIGN
 
