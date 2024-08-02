@@ -79,6 +79,7 @@ while getopts "i:u:o:s:a:c:h:g:t:e:d:r:" opt; do
         d) DB_FILE="$OPTARG"
         ;;
         r) REMOTE="$OPTARG"
+		;;
 		\?) echo "Invalid option -$OPTARG" >&2
     	;;
 	esac
