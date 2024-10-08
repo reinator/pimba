@@ -1,6 +1,6 @@
-#Authors: Renato Oliveira. Gisele Nunes, Raíssa Oliveira
-#version: 1.7
-#Date: 02-03-2021
+#Authors: Renato Oliveira, Tiago Leão, Gisele Nunes, Raíssa Oliveira
+#version: 2.0.13
+#Date: 08-10-2024
 
 ###    Copyright (C) 2021  Renato Oliveira
 ###
@@ -37,7 +37,9 @@
 #-d <databases_file.txt> = File with the databases path. Default is /bio/pimba_metabarcoding/databases.txt
 #-x <lulu> = if set as 'lulu', PIMBA will discard erroneous OTUs or ASVs with LULU. Default is not to use LULU.
 #-m <its> = if set as 'its', PIMBA will run the ITSx tool to extract only the intergenic regions and discard ribosomal data.
-#USAGE: /bio/pimba_metabarcoding/pimba_run.sh -i AllSamplesCOI_chip1234_good.fasta -o AllSamplesCOI_98clust90assign -s 0.98 -a 0.9 -c 0.9 -l 130 -h 1 -g COI-ALL -t 24 -e 0.1 -d databases.txt -x lulu
+#-r <yes or no> = set 'yes' to use the remote NCBI database. Default is 'no'
+#-b < NCBI database prefix> = It can be 'nt', 'nt_euk', 'core_nt','nr' depending on the database you have downloaded.
+#USAGE: /bio/pimba_metabarcoding/pimba_run.sh -i AllSamplesCOI_chip1234_good.fasta -o AllSamplesCOI_98clust90assign -s 0.98 -a 0.9 -c 0.9 -l 130 -h 1 -g COI-ALL -t 24 -e 0.1 -d databases.txt -x lulu -r no
 
 #source activate qiime1
 
@@ -59,9 +61,11 @@ APPROACH=otu
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 LULU=no
 ITS=no
+REMOTE=no
+DB_PREFIX='nt'
 #DB_FILE=/bio/pimba_metabarcoding/databases.txt
 
-while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:m:" opt; do
+while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:m:r:b:" opt; do
 	case $opt in
 		i) RAWDATA="$OPTARG"
 		;;
@@ -90,6 +94,10 @@ while getopts "i:o:w:s:a:c:l:h:g:t:e:d:x:m:" opt; do
         x) LULU="$OPTARG"
         ;;
         m) ITS="$OPTARG"
+        ;;
+        r) REMOTE="$OPTARG"
+		;;
+		b) DB_PREFIX="$OPTARG"
         ;;
 		\?) echo "Invalid option -$OPTARG" >&2
     	;;
@@ -146,6 +154,33 @@ newfile="$(basename $RAWDATA .fasta)"
 echo "Creating a VSEARCH Container: "
 docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
 
+if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "16S-NCBI" ] || [ $GENE = "COI-NCBI" ] || [ $GENE = "ITS-PLANTS-NCBI" ] || [ $GENE = "ALL-NCBI" ];
+then
+	PARAM_BLAST="/blastdb/$DB_PREFIX"
+	EXPORTBLAST='export BLASTDB=/blastdb/;'
+	PARAM_THREADS="-num_threads $THREADS"
+
+	if [ $REMOTE = "yes" ];
+	then
+		echo "BLAST running in remote mode"
+		PARAM_BLAST="nt -remote"
+		PARAM_THREADS=''
+		
+	 	echo "Creating a BLAST Container: "
+		docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+
+		EXPORTBLAST=''
+	else
+		echo "BLAST running in local mode"
+		export BLASTDB=$NCBI_DB_EXP
+		echo "BLASTDB=$BLASTDB"
+		echo "PARAMBLAST=$PARAM_BLAST"
+
+		echo "Creating a BLAST Container: "
+		docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+
+	fi
+fi
 
 if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "ITS-FUNGI-UNITE" ];
 then
@@ -332,7 +367,7 @@ NUMSAMPLES=$(awk '{print split($0,a,"\t"); exit}' ${newfile}_otu_table.txt)
 if [ $LULU = "lulu" ];
 then
 	export BLASTDB=$NCBI_DB_EXP
-	#Run makeblastdb to create a blast database sing the otus fasta file
+	#Run makeblastdb to create a blast database using the otus fasta file
 	echo "Creating a BLAST Container: "
 	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
 
@@ -535,18 +570,15 @@ then
 	docker rm qiimepipe_run_$TIMESTAMP
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
-	export BLASTDB=$NCBI_DB_EXP
-
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	#export BLASTDB=$NCBI_DB_EXP
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 
 	mkdir diversity_by_sample
@@ -581,17 +613,13 @@ then
 	#Filter out contaminants basing on ncbi/nt blast
 	export BLASTDB=$NCBI_DB_EXP
 
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
-
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log'
-
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db  $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast_ncbi.log
 
 	mkdir diversity_by_sample_ncbi
@@ -618,12 +646,12 @@ then
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query k__Fungi.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast_fungi.log; chmod 777 '${newfile}'_blast_fungi.log'
+	docker exec -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query k__Fungi.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast_fungi.log; chmod 777 '${newfile}'_blast_fungi.log"
 	#blastn -query k__Fungi.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -parse_deflines -evalue $EVALUE -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast_fungi.log
 
 	#Map reads back to OTU database <<<VSEARCH script>>>
@@ -697,18 +725,15 @@ then
 	
 
 	#Filter out contaminants basing on ncbi/nt blast
-	export BLASTDB=$NCBI_DB_EXP
-
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
+	#export BLASTDB=$NCBI_DB_EXP
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT';\
-		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log'
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast_ncbi.log; chmod 777 '${newfile}'_blast_ncbi.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db  $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast_ncbi.log
 
 	mkdir diversity_by_sample_ncbi
@@ -737,12 +762,12 @@ then
 	#blastn -query ${newfile}_otus_filtered.fasta -task megablast -db $DATABASE -max_target_seqs 1 -parse_deflines -num_threads 24 -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $DATABASE -max_target_seqs 1 -parse_deflines -num_threads 24 -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query '${newfile}'_otus_filtered.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast_plants.log; chmod 777 '${newfile}'_blast_plants.log'
+	docker exec -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus_filtered.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast_plants.log; chmod 777 '${newfile}'_blast_plants.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 
 	#Map reads back to OTU database <<<VSEARCH script>>>
@@ -768,7 +793,7 @@ then
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample; \
 	python3.6 /qiimepipe/createTaxonTable_singleFile.py ../'${newfile}'_blast_plants.log \
 	../'${newfile}'_otu_table_plants.txt /taxdump/rankedlineage.dmp; \
-	chmod -R 777 ../diversity_by_sample; chmod 777 ../'${newfile}'_otus_tax_assignments.txt'
+	chmod -R 777 ../diversity_by_sample; chmod 777 ../*_otus_tax_assignments.txt'
 	#python ${SCRIPT_PATH}/createTaxonTable_singleFile.py ../${newfile}_blast.log ../${newfile}_otu_table.txt
 	cd ../
 	mkdir output
@@ -794,26 +819,15 @@ then
 	
 
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
-	export BLASTDB=$NCBI_DB_EXP
-
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
-
-	# echo "Running the BLAST Container - blastn: "
-	# docker exec -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/; \
-	# 	blastn -query '${newfile}'_otus.fasta -task megablast -db /blastdb/nt -perc_identity \
-	# 	'$SIMILARITY_INT' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-	# 	-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
-	# 	'$THREADS' -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-	# 	'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	# export BLASTDB=$NCBI_DB_EXP
 
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query '${newfile}'_otus.fasta -task megablast -db nt -remote -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 	
 	mkdir diversity_by_sample
@@ -896,16 +910,13 @@ then
 	#Assign taxonomy to OTUS using blast. The blast database is needed.
 	export BLASTDB=$NCBI_DB_EXP
 
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ -v $BLASTDB:/blastdb/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
-
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; export BLASTDB=/blastdb/;\
-		blastn -query '${newfile}'_otus.fasta -task megablast -db /blastdb/nt -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads '$THREADS' \
-		-outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $NCBI_DB -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 
 	mkdir diversity_by_sample
@@ -934,16 +945,13 @@ else
 	docker stop qiimepipe_run_$TIMESTAMP
 	docker rm qiimepipe_run_$TIMESTAMP
 
-	echo "Creating a BLAST Container: "
-	docker run -id -v $CURRENT_PATH:/output/ -v $DATABASE_PATH:/gene/ --name blast_run_$TIMESTAMP itvdsbioinfo/pimba_blast:latest
-
 	echo "Running the BLAST Container - blastn: "
-	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-		blastn -query '${newfile}'_otus.fasta -task megablast -db /gene/*.fasta -perc_identity \
-		'$SIMILARITY_INT_ASG' -qcov_hsp_perc '$COVERAGE_INT' -max_hsps '$HITS_PER_SUBJECT' \
-		-max_target_seqs '$HITS_PER_SUBJECT' -evalue '$EVALUE' -parse_deflines -num_threads \
-		'$THREADS' -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > \
-		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log'
+	docker exec -u $(id -u) -i blast_run_$TIMESTAMP /bin/bash -c "cd /output/$OUTPUT; $EXPORTBLAST\
+		blastn -query '${newfile}'_otus.fasta -task megablast -db $PARAM_BLAST -perc_identity \
+		$SIMILARITY_INT_ASG -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT \
+		-max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE \
+		-outfmt \"6 qseqid sscinames sseqid staxids stitle pident qcovs evalue\" $PARAM_THREADS > \
+		'${newfile}'_blast.log; chmod 777 '${newfile}'_blast.log"
 	#blastn -query ${newfile}_otus.fasta -task megablast -db $GENE -perc_identity $SIMILARITY_INT -qcov_hsp_perc $COVERAGE_INT -max_hsps $HITS_PER_SUBJECT -max_target_seqs $HITS_PER_SUBJECT -evalue $EVALUE -parse_deflines -num_threads $THREADS -outfmt "6 qseqid sscinames sseqid staxids stitle pident qcovs evalue" > ${newfile}_blast.log
 
 	mkdir diversity_by_sample
