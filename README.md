@@ -22,7 +22,7 @@ And that's all! Now you can run PIMBA on your data!
 The first step to run PIMBA is to prepare your data. PIMBA can be used with paired-end or single-end reads (the latter being single-index or dual-index).
 The output will be a fasta file that can be used in the next step.
 ### paired-end reads:
-Please, place all your forward and reverse reads in one directory and make sure that forward reads contain "R1" and reverse reads contain "R2" in the file's name.
+Please, place all your forward and reverse reads in one directory and make sure that forward reads contain "_R1" and reverse reads contain "_R2" in the file's name.
 ~~~
 ./pimba_prepare.sh illumina <rawdata_dir> <output_reads> <num_threads> <adapters.txt> <min_length> <min_phred>
 ~~~
