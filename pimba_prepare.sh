@@ -1,7 +1,7 @@
 #!/bin/bash
-#Authors: Renato Oliveira. Gisele Nunes, Raíssa Oliveira
-#version: 1.8
-#Date: 07-02-2023
+#Authors: Renato Oliveira, Gisele Nunes, Raíssa Oliveira, Tiago Leão.
+#version: 1.9
+#Date: 21-11-2024
 
 ###	Copyright (C) 2021  Renato Oliveira
 ###
@@ -110,7 +110,7 @@ then
 
 	echo "Running the AdapterRemoval Container: "
 	docker exec -u $(id -u) -i adapter_removal_prepare_$TIMESTAMP  /bin/bash -c 'ADAPTERS='$FILENAME_ADAP'; cd /output/prepare_output/;\
-	 for i in R1/*.fastq*; do newfile=${i%%_*}; newfile=${newfile##*/}; echo $newfile;\
+	 for i in R1/*.fastq*; do newfile=${i%%_R1*}; newfile=${newfile##*/}; echo $newfile;\
 	 AdapterRemoval --file1 $i --file2 R2/${newfile}* --threads '$NUM_THREADS' --mate-separator " " --adapter-list /adapter/${ADAPTERS} \
 	  --trimwindows 10 --minquality '$MINPHRED' --minlength '$MINLENGTH' --qualitymax 64 --basename ${newfile}_good --mm 5; done;\
 	  rm -r R1/ R2/; chmod -R 777 /output/prepare_output/;'
