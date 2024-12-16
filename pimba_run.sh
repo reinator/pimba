@@ -1,6 +1,6 @@
 #Authors: Renato Oliveira, Tiago Leão, Gisele Nunes, Raíssa Oliveira
-#version: 2.0.13
-#Date: 08-10-2024
+#version: 2.0.14
+#Date: 11-12-2024
 
 ###    Copyright (C) 2021  Renato Oliveira
 ###
@@ -525,30 +525,9 @@ then
 	echo "Running the Qiime Container - assign_taxonomy.py: "
 	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
 	assign_taxonomy.py -i '${newfile}'_otus.fasta -o output -t /database/*.t* \
-	-r /database/rep_set/*.fa* --similarity='$SIMILARITY_ASSIGN'; \
+	-r /database/*.fa* --similarity='$SIMILARITY_ASSIGN'; \
 	chmod -R 777 output'
 	#assign_taxonomy.py -i ${newfile}_otus.fasta -o output -t ${RDP_DB_16S}/trainset16_022016.rdp.tax -r ${RDP_DB_16S}/trainset16_022016.rdp.fasta --similarity=$SIMILARITY_ASSIGN
-
-	#Align sequences on QIIME, using RDP reference sequences (use the file “otus.fa” from UPARSE as input file)
-	echo "Running the Qiime Container - align_seqs.py: "
-	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	align_seqs.py -i '${newfile}'_otus.fasta -o rep_set_align -t /database/*align*; \
-	chmod -R 777 rep_set_align'
-	#align_seqs.py -i ${newfile}_otus.fasta -o rep_set_align -t ${RDP_DB_16S}/trainset16_022016.rdp.align.fasta
-
-	#Filter alignments on QIIME
-	echo "Running the Qiime Container - filter_alignment.py: "
-	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	filter_alignment.py -i rep_set_align/'${newfile}'_otus_aligned.fasta -o filtered_alignment; \
-	chmod -R 777 filtered_alignment'
-	#filter_alignment.py -i rep_set_align/${newfile}_otus_aligned.fasta -o filtered_alignment
-
-	#Make the reference tree on QIIME
-	echo "Running the Qiime Container - make_phylogeny.py: "
-	docker exec -u $(id -u) -i qiime_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	make_phylogeny.py -i filtered_alignment/'${newfile}'_otus_aligned_pfiltered.fasta -o rep_set.tre; \
-	chmod -R 777 rep_set.tre'
-	#make_phylogeny.py -i filtered_alignment/${newfile}_otus_aligned_pfiltered.fasta -o rep_set.tre
 
 	mkdir diversity_by_sample
 	cd diversity_by_sample
