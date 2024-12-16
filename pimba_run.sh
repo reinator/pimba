@@ -152,7 +152,7 @@ newfile="$(basename $RAWDATA .fasta)"
 
 #Dereplication <<<USING USEARCH 7>>>
 echo "Creating a VSEARCH Container: "
-docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.15.2
+docker run -id -v $CURRENT_PATH:/output/ -v $FULL_PATH_RAW:/rawdata/ --name vsearch_run_$TIMESTAMP itvdsbioinfo/pimba_vsearch:v2.29.1
 
 if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "16S-NCBI" ] || [ $GENE = "COI-NCBI" ] || [ $GENE = "ITS-PLANTS-NCBI" ] || [ $GENE = "ALL-NCBI" ];
 then
@@ -340,19 +340,12 @@ fi
 echo "Running the VSEARCH Container - --usearch_global: "
 docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus.fasta --strand both \
-	--id '$SIMILARITY' --uc '${newfile}'_map.uc --threads '$THREADS' ; \
-	chmod 777 '${newfile}'_map.uc;'
+	--id '$SIMILARITY' --uc '${newfile}'_map.uc --otutabout '${newfile}'_otu_table.txt --threads '$THREADS' ; \
+	chmod 777 '${newfile}'_map.uc '${newfile}'_otu_table.txt;'
 #vsearch --usearch_global ../${RAWDATA} --db ${newfile}_otus.fasta --strand both --id $SIMILARITY --uc ${newfile}_map.uc
 
-#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
 echo "Creating a QiimePipe Container: "
 docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
-
-echo "Running the QiimePipe Container - uc2otutab: "
-docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map.uc > '${newfile}'_otu_table.txt;\
-	chmod 777 '${newfile}'_otu_table.txt'
-#python ${BMP_PATH}/uc2otutab.py ${newfile}_map.uc > ${newfile}_otu_table.txt
 
 if [ $APPROACH = "asv" ];
 then
@@ -637,16 +630,9 @@ then
 	echo "Running the VSEARCH Container - --usearch_global: "
 	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db k__Fungi.fasta --strand both \
-	--id '$SIMILARITY' --uc '${newfile}'_map_fungi.uc; \
-	chmod 777 '${newfile}'_map_fungi.uc;'
+	--id '$SIMILARITY' --uc '${newfile}'_map_fungi.uc --otutabout '${newfile}'_otu_table_fungi.txt --threads '$THREADS'; \
+	chmod 777 '${newfile}'_map_fungi.uc '${newfile}'_otu_table_fungi.txt;'
 	#vsearch  --usearch_global ../${RAWDATA} --db k__Fungi.fasta --strand both --id $SIMILARITY --uc ${newfile}_map_fungi.uc
-
-	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
-	echo "Running the QiimePipe Container - uc2otutab: "
-	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map_fungi.uc > '${newfile}'_otu_table_fungi.txt;\
-	chmod 777 '${newfile}'_otu_table_fungi.txt'
-	#python ${BMP_PATH}/uc2otutab.py ${newfile}_map_fungi.uc > ${newfile}_otu_table_fungi.txt
 
 	mkdir diversity_by_sample
 	cd diversity_by_sample
@@ -753,17 +739,9 @@ then
 	echo "Running the VSEARCH Container - --usearch_global: "
 	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
 	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus_filtered.fasta --strand both \
-	--id '$SIMILARITY' --uc '${newfile}'_map_plants.uc; \
-	chmod 777 '${newfile}'_map_plants.uc;'
+	--id '$SIMILARITY' --uc '${newfile}'_map_plants.uc --otutabout '${newfile}'_otu_table_plants.txt --threads '$THREADS'; \
+	chmod 777 '${newfile}'_map_plants.uc '${newfile}'_otu_table_plants.txt;'
 	#vsearch  --usearch_global ../${RAWDATA} --db k__Fungi.fasta --strand both --id $SIMILARITY --uc ${newfile}_map_fungi.uc
-
-	#Convert UC to otu-table.txt <<< BMP SCRIPT>>>
-	echo "Running the QiimePipe Container - uc2otutab: "
-	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'; \
-	python3.6 /qiimepipe/uc2otutab.py '${newfile}'_map_plants.uc > '${newfile}'_otu_table_plants.txt;\
-	chmod 777 '${newfile}'_otu_table_plants.txt'
-	#python ${BMP_PATH}/uc2otutab.py ${newfile}_map_fungi.uc > ${newfile}_otu_table_fungi.txt
-
 
 	mkdir diversity_by_sample
 	cd diversity_by_sample
