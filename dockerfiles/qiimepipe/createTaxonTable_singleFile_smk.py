@@ -1,5 +1,5 @@
 import sys
-#USAGE: python createTaxonTableCOI.py blastTable.txt otuTable.txt rankedlineage.dmp
+#USAGE: python createTaxonTableCOI.py blastTable.txt otuTable.txt rankedlineage.dmp merged.dmp
 
 def createDicTaxdump(taxdump, merged_path):
         dicTaxdump = dict()
@@ -128,12 +128,13 @@ def convertBlastToQiimeTax(dicBlast, dicTaxdump, filename, unassigned_otu):
 
 	for otu in otus:
 		taxid = dicBlast[otu][2]
-		taxon = dicTaxdump[str(taxid)]
-		taxon = taxon.split(";")
-		species = taxon[6][taxon[6].find(" ")+1:]
-		
-		qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
-		#qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species.replace(" ","")+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
+		if str(taxid) in dicTaxdump:
+			taxon = dicTaxdump[str(taxid)]
+			taxon = taxon.split(";")
+			species = taxon[6][taxon[6].find(" ")+1:]
+			
+			qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
+			#qiimeTaxTxt+=otu+"\t"+"k__"+taxon[0]+"; p__"+taxon[1]+"; c__"+taxon[2]+"; o__"+taxon[3]+"; f__"+taxon[4]+"; g__"+taxon[5]+"; s__"+species.replace(" ","")+"\t"+str(float(dicBlast[otu][1])/100)+"\n"
 
 	for unass_otu in unassigned_otu:
 		qiimeTaxTxt+=unass_otu+"\tUnassigned\t1.00\n"
@@ -242,7 +243,12 @@ for s in sample_ids:
 
 		if(k in dic_keys and k in dic_blast_keys):
 			if(dic[k]!="0"):
-				outtxt+=k+"\t"+dic[k]+"\t"+dicBlast[k][0]+"\t"+str(dicBlast[k][1])+"\t"+dicTaxdump[str(dicBlast[k][2])]+"\n"
+				if(str(dicBlast[k][2]) in dicTaxdump):
+					outtxt+=k+"\t"+dic[k]+"\t"+dicBlast[k][0]+"\t"+str(dicBlast[k][1])+"\t"+dicTaxdump[str(dicBlast[k][2])]+"\n"
+				else:
+					outtxt+=k+"\t"+dic[k]+"\tUNASSIGNED\tNA\tUNASSIGNED\n"
+					if(k not in unassigned_otu):
+						unassigned_otu.append(k)
 
 		elif(k in dic_keys and k not in dic_blast_keys):
 			if(dic[k]!="0"):
