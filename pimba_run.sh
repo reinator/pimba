@@ -1,6 +1,6 @@
 #Authors: Renato Oliveira, Tiago Leão, Gisele Nunes, Raíssa Oliveira
-#version: 2.0.14
-#Date: 11-12-2024
+#version: 2.0.15
+#Date: 14-1-2025
 
 ###    Copyright (C) 2021  Renato Oliveira
 ###
@@ -336,24 +336,35 @@ then
 	cp ${newfile}_otus.fasta ${newfile}_asv.fasta
 fi
 
-#Map reads back to OTU database <<<VSEARCH script>>>
-echo "Running the VSEARCH Container - --usearch_global: "
-docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
-	vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus.fasta --strand both \
-	--id '$SIMILARITY' --uc '${newfile}'_map.uc --otutabout '${newfile}'_otu_table.txt --threads '$THREADS' ; \
-	chmod 777 '${newfile}'_map.uc '${newfile}'_otu_table.txt;'
-#vsearch --usearch_global ../${RAWDATA} --db ${newfile}_otus.fasta --strand both --id $SIMILARITY --uc ${newfile}_map.uc
+
+if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "ITS-PLANTS-NCBI" ];
+then
+	#Map reads back to OTU database <<<VSEARCH script>>>
+	echo "Running the VSEARCH Container - --usearch_global: "
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+		vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus.fasta --strand both \
+		--id '$SIMILARITY' --uc '${newfile}'_map.uc --otutabout '${newfile}'_pre_otu_table.txt --threads '$THREADS' ; \
+		chmod 777 '${newfile}'_map.uc '${newfile}'_pre_otu_table.txt;'
+	#vsearch --usearch_global ../${RAWDATA} --db ${newfile}_otus.fasta --strand both --id $SIMILARITY --uc ${newfile}_map.uc
+else
+	#Map reads back to OTU database <<<VSEARCH script>>>
+	echo "Running the VSEARCH Container - --usearch_global: "
+	docker exec -u $(id -u) -i vsearch_run_$TIMESTAMP  /bin/bash -c 'cd /output/'$OUTPUT'; \
+		vsearch --usearch_global /rawdata/'${FILE_NAME_RAW}' --db '${newfile}'_otus.fasta --strand both \
+		--id '$SIMILARITY' --uc '${newfile}'_map.uc --otutabout '${newfile}'_otu_table.txt --threads '$THREADS' ; \
+		chmod 777 '${newfile}'_map.uc '${newfile}'_otu_table.txt;'
+	#vsearch --usearch_global ../${RAWDATA} --db ${newfile}_otus.fasta --strand both --id $SIMILARITY --uc ${newfile}_map.uc
+	if [ $APPROACH = "asv" ];
+	then
+		cp ${newfile}_otu_table.txt ${newfile}_asv_table.txt
+	fi
+fi
 
 echo "Creating a QiimePipe Container: "
 docker run -id -v $CURRENT_PATH:/output/ --name qiimepipe_run_$TIMESTAMP itvdsbioinfo/pimba_qiimepipe:v2
 
-if [ $APPROACH = "asv" ];
-then
-	cp ${newfile}_otu_table.txt ${newfile}_asv_table.txt
-fi
-
 #getting the number of samples through the otu/asv.table
-NUMSAMPLES=$(awk '{print split($0,a,"\t"); exit}' ${newfile}_otu_table.txt)
+#NUMSAMPLES=$(awk '{print split($0,a,"\t"); exit}' ${newfile}_otu_table.txt)
 
 ##########################################
 #Run LULU to generate a curated otu_table if number of samples is greater than 1#
@@ -382,11 +393,20 @@ then
 	echo "Creating an R Container: "
 	docker run -id -v $CURRENT_PATH:/output/ --name rdocker_run_$TIMESTAMP itvdsbioinfo/pimba_r:latest bash
 
-	echo "Running the R Container - lulu: "
-	docker exec -u $(id -u) -i rdocker_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
-		Rscript /data/file.R ../'${newfile}'_otu_table.txt match_list.txt '${newfile}'_otu_table_lulu.txt; \
-		chmod 777 '${newfile}'_otu_table_lulu.txt lulu.log*'
-	#Rscript ${SCRIPT_PATH}/file.R ${newfile}_otu_table.txt match_list.txt ${newfile}_otu_table_lulu.txt
+	if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "ITS-PLANTS-NCBI" ];
+	then
+		echo "Running the R Container - lulu: "
+		docker exec -u $(id -u) -i rdocker_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
+			Rscript /data/file.R ../'${newfile}'_pre_otu_table.txt match_list.txt '${newfile}'_otu_table_lulu.txt; \
+			chmod 777 '${newfile}'_otu_table_lulu.txt lulu.log*'
+		#Rscript ${SCRIPT_PATH}/file.R ${newfile}_otu_table.txt match_list.txt ${newfile}_otu_table_lulu.txt
+	else
+		echo "Running the R Container - lulu: "
+		docker exec -u $(id -u) -i rdocker_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/lulu_output/; \
+			Rscript /data/file.R ../'${newfile}'_otu_table.txt match_list.txt '${newfile}'_otu_table_lulu.txt; \
+			chmod 777 '${newfile}'_otu_table_lulu.txt lulu.log*'
+		#Rscript ${SCRIPT_PATH}/file.R ${newfile}_otu_table.txt match_list.txt ${newfile}_otu_table_lulu.txt
+	fi
 
 	#Remove "" from the lulu new otu table
 	sed -i -e 's/"X//g' lulu_output/${newfile}_otu_table_lulu.txt
@@ -396,8 +416,14 @@ then
 	sed -i '1s/^/OTUId\t/' lulu_output/${newfile}_otu_table_lulu.txt
 
 	#Rename the otu_table files
-	mv ${newfile}_otu_table.txt ${newfile}_otu_table_old.txt
-	cp lulu_output/${newfile}_otu_table_lulu.txt ${newfile}_otu_table.txt
+	if [ $GENE = "ITS-FUNGI-NCBI" ] || [ $GENE = "ITS-PLANTS-NCBI" ];
+	then
+		mv ${newfile}_pre_otu_table.txt ${newfile}_pre_otu_table_old.txt
+		cp lulu_output/${newfile}_otu_table_lulu.txt ${newfile}_pre_otu_table.txt
+	else
+		mv ${newfile}_otu_table.txt ${newfile}_otu_table_old.txt
+		cp lulu_output/${newfile}_otu_table_lulu.txt ${newfile}_otu_table.txt
+	fi
 
 	docker stop rdocker_run_$TIMESTAMP
 	docker rm rdocker_run_$TIMESTAMP
@@ -604,7 +630,7 @@ then
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
 	python3.6 /qiimepipe/create_otuTaxAssignment.py ../'${newfile}'_blast_ncbi.log \
-	../'${newfile}'_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
+	../'${newfile}'_pre_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
 	#python ${SCRIPT_PATH}/create_otuTaxAssignment.py ../${newfile}_blast_ncbi.log ../${newfile}_otu_table.txt ncbi_otus_tax_assignments.txt
 
 	cd ..
@@ -648,6 +674,7 @@ then
 	mkdir output
 	chmod -R 777 output
 	mv ${newfile}_otus_tax_assignments.txt output/
+	cp ${newfile}_otu_table_fungi.txt ${newfile}_otu_table.txt
 
 	docker stop blast_run_$TIMESTAMP
 	docker rm blast_run_$TIMESTAMP
@@ -655,9 +682,6 @@ then
 
 elif [ $GENE = "ITS-FUNGI-UNITE" ];
 then
-
-
-
 	echo "Creating a Qiime Container: "
 	docker run -id -v $CURRENT_PATH:/output/ -v $ITS_UNITE_DB:/database/ --name qiime_run_$TIMESTAMP itvdsbioinfo/pimba_qiime:latest
 
@@ -711,7 +735,7 @@ then
 	echo "Running the QiimePipe Container - create_otuTaxAssignment.py: "
 	docker exec -u $(id -u) -i qiimepipe_run_$TIMESTAMP /bin/bash -c 'cd /output/'$OUTPUT'/diversity_by_sample_ncbi; \
 	python3.6 /qiimepipe/create_otuTaxAssignment.py ../'${newfile}'_blast_ncbi.log \
-	../'${newfile}'_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
+	../'${newfile}'_pre_otu_table.txt ncbi_otus_tax_assignments.txt; chmod -R 777 ../diversity_by_sample_ncbi'
 	#python ${SCRIPT_PATH}/create_otuTaxAssignment.py ../${newfile}_blast_ncbi.log ../${newfile}_otu_table.txt ncbi_otus_tax_assignments.txt
 
 	cd ..
@@ -757,6 +781,7 @@ then
 	
 	mv *_otus_tax_assignments.txt ${newfile}_otus_tax_assignments.txt
 	mv ${newfile}_otus_tax_assignments.txt output/
+	cp ${newfile}_otu_table_fungi.txt ${newfile}_otu_table.txt
 
 	chmod -R 777 output
 
