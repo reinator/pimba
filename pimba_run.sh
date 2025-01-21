@@ -781,7 +781,7 @@ then
 	
 	mv *_otus_tax_assignments.txt ${newfile}_otus_tax_assignments.txt
 	mv ${newfile}_otus_tax_assignments.txt output/
-	cp ${newfile}_otu_table_fungi.txt ${newfile}_otu_table.txt
+	cp ${newfile}_otu_table_plants.txt ${newfile}_otu_table.txt
 
 	chmod -R 777 output
 
