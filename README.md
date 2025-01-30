@@ -1,4 +1,7 @@
-# pimba
+# PIMBA
+<p align="center">
+<img src="Figures/PIMBA.png" alt="PIMBA Logo" width="50%">
+</p>
 PIMBA, a PIpeline for MetaBarcoding Analysis which allows the use of customized databases, as well as other reference databases.
 
 ## How to cite?
