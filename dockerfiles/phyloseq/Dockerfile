@@ -24,3 +24,4 @@ RUN Rscript -e "install.packages('dendextend')"
 WORKDIR /data/
 
 COPY Phyloseq_pimba.R /data/
+COPY pvclust.R /data/
