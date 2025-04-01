@@ -198,21 +198,26 @@ def plot_rarefaction_curves(otu_table_df, output_dir):
     pars = [{'col': palette[i % len(palette)], 'lty': lty[i % len(lty)]} for i in range(len(otu_dataFC))]
 
     # Create the plot
-    plt.figure(figsize=(15, 8))
+    fig, ax = plt.subplots(figsize=(15, 8))
     for i, (idx, row) in enumerate(otu_dataFC.iterrows()):
         col = pars[i]['col']
         linestyle = pars[i]['lty']
         rare_curve = [rarefy(row, n) for n in range(1, int(raremax) + 1, 50)]
-        plt.plot(range(1, int(raremax) + 1, 50), rare_curve, label=idx, color=col, linestyle=linestyle)
+        ax.plot(range(1, int(raremax) + 1, 50), rare_curve, label=idx, color=col, linestyle=linestyle)
 
-    # Adding labels and legend
-    plt.xlabel('Sample Size')
-    plt.ylabel('Species')
-    plt.title('Rarefaction Curves')
-    plt.legend(loc='best')
+    # Adding labels and title
+    ax.set_xlabel('Sample Size')
+    ax.set_ylabel('Species')
+    ax.set_title('Rarefaction Curves')
+
+    # Place the legend outside the figure
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0)
+
+    # Adjust layout
+    plt.tight_layout(rect=[0, 0, 0.8, 1])  # Leave space for legend
 
     # Save the plot as an SVG file
-    plt.savefig(os.path.join(output_dir, 'rarefaction_curve.svg'))
+    plt.savefig(os.path.join(output_dir, 'rarefaction_curve.svg'), bbox_inches='tight')
 
 def plot_cluster_dendrogram(otu_table_df, meta_table_df, output_dir, groupby):
     # Transpose OTU table to have samples as rows
@@ -371,22 +376,38 @@ def perform_pcoa_unweighted_unifrac(otu_table_df, meta_table_df, output_dir, gro
         pcoa_df[groupby] = meta_table_df.loc[pcoa_df['SampleName'], groupby]
 
     # Plotting the PCoA results
-    plt.figure(figsize=(15, 8))
-    sns.scatterplot(data=pcoa_df, x='PC1', y='PC2', hue=groupby if groupby and groupby in pcoa_df.columns else None, palette='Set2', s=300)
+    fig, ax = plt.subplots(figsize=(15, 8))
+    scatter = sns.scatterplot(
+        ax=ax,
+        data=pcoa_df,
+        x='PC1', y='PC2',
+        hue=groupby if groupby and groupby in pcoa_df.columns else None,
+        palette='Set2',
+        s=300
+    )
 
     # Annotate each point with the sample name
     for i, sample_name in enumerate(pcoa_df['SampleName']):
-        plt.text(pcoa_df['PC1'].iloc[i], pcoa_df['PC2'].iloc[i], sample_name,
-                 horizontalalignment='left', size='medium', color='black', weight='semibold')
+        ax.text(
+            pcoa_df['PC1'].iloc[i], pcoa_df['PC2'].iloc[i], sample_name,
+            horizontalalignment='right', size='medium', color='black', weight='semibold'
+        )
 
-    plt.title('PCoA with Unweighted UniFrac Distance')
-    plt.xlabel('PC1')
-    plt.ylabel('PC2')
-    plt.axhline(0, color='grey', lw=0.5, ls='--')
-    plt.axvline(0, color='grey', lw=0.5, ls='--')
-    plt.grid()
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "PCoA_unweighted_unifrac.svg"))
+    ax.set_title('PCoA with Unweighted UniFrac Distance')
+    ax.set_xlabel('PC1')
+    ax.set_ylabel('PC2')
+    ax.axhline(0, color='grey', lw=0.5, ls='--')
+    ax.axvline(0, color='grey', lw=0.5, ls='--')
+    ax.grid()
+
+    # Move the legend outside the figure
+    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0)
+
+    # Adjust layout to make space for the legend
+    plt.tight_layout(rect=[0, 0, 0.8, 1])
+
+    # Save the plot as an SVG file
+    plt.savefig(os.path.join(output_dir, "PCoA_unweighted_unifrac.svg"), bbox_inches='tight')
 
 def perform_nmds_bray_curtis(otu_table_df, meta_table_df, output_dir, groupby):
     # Function to calculate Bray-Curtis distance
@@ -426,22 +447,25 @@ def perform_nmds_bray_curtis(otu_table_df, meta_table_df, output_dir, groupby):
 
     # Plotting the NMDS results
     plt.figure(figsize=(15, 8))
-    sns.scatterplot(data=nmds_df, x='NMDS1', y='NMDS2', hue=groupby if groupby and groupby in nmds_df.columns else None, palette='Set2', s=300)
+    ax = sns.scatterplot(data=nmds_df, x='NMDS1', y='NMDS2', hue=groupby if groupby and groupby in nmds_df.columns else None, palette='Set2', s=300)
 
     # Annotate each point with the sample name
     for i, sample_name in enumerate(nmds_df['SampleName']):
         plt.text(nmds_df['NMDS1'].iloc[i], nmds_df['NMDS2'].iloc[i], sample_name,
-                 horizontalalignment='left', size='medium', color='black', weight='semibold')
+                 horizontalalignment='right', size='medium', color='black', weight='semibold')
 
-    # Title and labels
     plt.title('NMDS with Bray-Curtis Distance')
     plt.xlabel('NMDS1')
     plt.ylabel('NMDS2')
     plt.axhline(0, color='grey', lw=0.5, ls='--')
     plt.axvline(0, color='grey', lw=0.5, ls='--')
     plt.grid()
+
+    # Move the legend outside the plot
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+
     plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, "NMDS_bray.svg"))
+    plt.savefig(os.path.join(output_dir, "NMDS_bray.svg"), bbox_inches='tight')
 
 def main():
     parser = argparse.ArgumentParser(description='Process OTU table, taxonomic assignments, and metadata.')
