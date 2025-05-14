@@ -13,6 +13,8 @@ import skbio.diversity
 from scipy.special import gammaln
 from skbio import DistanceMatrix
 from sklearn.manifold import MDS
+import plotly.express as px
+from adjustText import adjust_text
 
 def load_data(otu_file, tax_file, metadata_file):
     # Load OTU table
@@ -213,9 +215,6 @@ def plot_rarefaction_curves(otu_table_df, output_dir):
     # Place the legend outside the figure
     ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1), borderaxespad=0)
 
-    # Adjust layout
-    plt.tight_layout(rect=[0, 0, 0.8, 1])  # Leave space for legend
-
     # Save the plot as an SVG file
     plt.savefig(os.path.join(output_dir, 'rarefaction_curve.svg'), bbox_inches='tight')
 
@@ -386,12 +385,16 @@ def perform_pcoa_unweighted_unifrac(otu_table_df, meta_table_df, output_dir, gro
         s=300
     )
 
-    # Annotate each point with the sample name
+    # Annotate each point with the sample name using adjustText to avoid overlaps
+    texts = []
     for i, sample_name in enumerate(pcoa_df['SampleName']):
-        ax.text(
+        texts.append(ax.text(
             pcoa_df['PC1'].iloc[i], pcoa_df['PC2'].iloc[i], sample_name,
-            horizontalalignment='right', size='medium', color='black', weight='semibold'
-        )
+            size='medium', color='black', weight='semibold'
+        ))
+
+    # Automatically adjust text to avoid overlaps
+    adjust_text(texts, ax=ax, arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
 
     ax.set_title('PCoA with Unweighted UniFrac Distance')
     ax.set_xlabel('PC1')
@@ -408,26 +411,37 @@ def perform_pcoa_unweighted_unifrac(otu_table_df, meta_table_df, output_dir, gro
 
     # Save the plot as an SVG file
     plt.savefig(os.path.join(output_dir, "PCoA_unweighted_unifrac.svg"), bbox_inches='tight')
+    plt.close()
+
+    # Create interactive HTML version using Plotly (hover only)
+    fig_html = px.scatter(
+        pcoa_df,
+        x='PC1', y='PC2',
+        color=groupby if groupby and groupby in pcoa_df.columns else None,
+        hover_name='SampleName',
+        title='PCoA with Unweighted UniFrac Distance',
+        width=1000,
+        height=600
+    )
+    fig_html.update_layout(legend=dict(x=1.02, y=1), margin=dict(r=200))
+
+    # Save the interactive HTML file
+    fig_html.write_html(os.path.join(output_dir, "PCoA_unweighted_unifrac.html"))
 
 def perform_nmds_bray_curtis(otu_table_df, meta_table_df, output_dir, groupby):
     # Function to calculate Bray-Curtis distance
     def calculate_bray_curtis(otu_table):
-        # Normalize the OTU table
         otu_table_normalized = otu_table.div(otu_table.sum(axis=0), axis=1)
-
-        # Create a distance matrix
         n_samples = otu_table_normalized.shape[1]
         bray_curtis_matrix = np.zeros((n_samples, n_samples))
-
         for i in range(n_samples):
             for j in range(n_samples):
-                # Calculate Bray-Curtis distance
                 if i != j:
-                    bray_curtis_dist = (otu_table_normalized.iloc[:, i] - otu_table_normalized.iloc[:, j]).abs().sum() / (otu_table_normalized.iloc[:, i] + otu_table_normalized.iloc[:, j]).sum()
+                    bray_curtis_dist = (otu_table_normalized.iloc[:, i] - otu_table_normalized.iloc[:, j]).abs().sum() / \
+                                       (otu_table_normalized.iloc[:, i] + otu_table_normalized.iloc[:, j]).sum()
                     bray_curtis_matrix[i, j] = bray_curtis_dist
                 else:
-                    bray_curtis_matrix[i, j] = 0.0  # Distance to itself is zero
-
+                    bray_curtis_matrix[i, j] = 0.0
         return DistanceMatrix(bray_curtis_matrix, otu_table.columns.tolist())
 
     # Calculate the distance matrix
@@ -439,20 +453,24 @@ def perform_nmds_bray_curtis(otu_table_df, meta_table_df, output_dir, groupby):
 
     # Create a DataFrame for the results
     nmds_df = pd.DataFrame(nmds_results, index=otu_table_df.columns.tolist(), columns=['NMDS1', 'NMDS2'])
-    nmds_df['SampleName'] = otu_table_df.columns.tolist()  # Add sample names for labeling
+    nmds_df['SampleName'] = otu_table_df.columns.tolist()
 
-    # Add group information if groupby is specified
+    # Add group information
     if groupby and groupby in meta_table_df.columns:
         nmds_df[groupby] = meta_table_df.loc[nmds_df['SampleName'], groupby]
 
-    # Plotting the NMDS results
+    # Plotting
     plt.figure(figsize=(15, 8))
-    ax = sns.scatterplot(data=nmds_df, x='NMDS1', y='NMDS2', hue=groupby if groupby and groupby in nmds_df.columns else None, palette='Set2', s=300)
+    ax = sns.scatterplot(data=nmds_df, x='NMDS1', y='NMDS2',
+                         hue=groupby if groupby and groupby in nmds_df.columns else None,
+                         palette='Set2', s=300)
 
-    # Annotate each point with the sample name
+    # Add text annotations with adjustText
+    texts = []
     for i, sample_name in enumerate(nmds_df['SampleName']):
-        plt.text(nmds_df['NMDS1'].iloc[i], nmds_df['NMDS2'].iloc[i], sample_name,
-                 horizontalalignment='right', size='medium', color='black', weight='semibold')
+        texts.append(plt.text(nmds_df['NMDS1'].iloc[i], nmds_df['NMDS2'].iloc[i], sample_name,
+                              size='medium', color='black', weight='semibold'))
+    adjust_text(texts, arrowprops=dict(arrowstyle='->', color='gray', lw=0.5))
 
     plt.title('NMDS with Bray-Curtis Distance')
     plt.xlabel('NMDS1')
@@ -461,11 +479,26 @@ def perform_nmds_bray_curtis(otu_table_df, meta_table_df, output_dir, groupby):
     plt.axvline(0, color='grey', lw=0.5, ls='--')
     plt.grid()
 
-    # Move the legend outside the plot
+    # Move the legend
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
 
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "NMDS_bray.svg"), bbox_inches='tight')
+
+    # Create interactive HTML version using Plotly (hover only)
+    fig_html = px.scatter(
+        nmds_df,
+        x='NMDS1', y='NMDS2',
+        color=groupby if groupby and groupby in nmds_df.columns else None,
+        hover_name='SampleName',
+        title='NMDS with Bray-Curtis Distance',
+        width=1000,
+        height=600
+    )
+    fig_html.update_layout(legend=dict(x=1.02, y=1), margin=dict(r=200))
+
+    # Save the interactive HTML file
+    fig_html.write_html(os.path.join(output_dir, "NMDS_bray.html"))
 
 def main():
     parser = argparse.ArgumentParser(description='Process OTU table, taxonomic assignments, and metadata.')
