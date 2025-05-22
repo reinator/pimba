@@ -4,6 +4,9 @@
 </p>
 PIMBA, a PIpeline for MetaBarcoding Analysis which allows the use of customized databases, as well as other reference databases.
 
+## PIMBA 3.0, the new version of PIMBA with Snakemake
+PIMBA was originally implemented in Bash, which posed limitations in structure and processing speed. To enhance usability, reproducibility, and scalability, we have developed a Snakemake-based version of PIMBA. Snakemake provides structured workflow management, automated parallelization, and seamless integration with containerization technologies, making it significantly faster and more efficient than traditional Bash scripting. This new Snakemake-based pipeline (PIMBA 3.0) optimizes metabarcoding analyses, offering a powerful tool for biodiversity research, ecological monitoring, and health sciences applications. Our benchmarking analysis (comparison between version 3.0 and 2.0) demonstrated a substantial reduction in execution time, particularly in the PIMBA Prepare mode, which is crucial for processing large-scale metabarcoding projects with numerous samples. PIMBA 3.0 can be accessed here: https://github.com/itvgenomics/pimba_smk
+
 ## How to cite?
 The peer-reviewed version of the paper can be found at https://doi.org/10.1007/978-3-030-91814-9_10
 ~~~
