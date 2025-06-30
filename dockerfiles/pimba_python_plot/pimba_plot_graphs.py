@@ -71,7 +71,7 @@ def plot_taxonomic_composition(otu_table_df, tax_table_df, meta_table_df, rank, 
         pivot_df.to_csv(os.path.join(output_dir, f'{rank}_pivot_table.tsv'), sep='\t')
         
         # Initialize the FacetGrid
-        g = sns.FacetGrid(pivot_df, col=groupby, col_wrap=3, sharey=False, sharex=False, height=8, aspect=0.5)
+        g = sns.FacetGrid(pivot_df, col=groupby, col_wrap=3, sharey=False, sharex=False, height=8, aspect=1.0)
         
         # Plot the stacked bar plot within each facet
         for ax, (name, df) in zip(g.axes.flat, pivot_df.groupby(groupby)):
@@ -79,7 +79,7 @@ def plot_taxonomic_composition(otu_table_df, tax_table_df, meta_table_df, rank, 
             ax.set_title(name, fontsize=18)
             ax.set_xlabel("Sample", fontsize=14)
             ax.set_ylabel(f"Relative Abundance ({rank.capitalize()})", fontsize=14)
-            ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha='right', fontsize=12)
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontsize=12)
             ax.set_yticks(ax.get_yticks())  # Ensure that ticks are set before setting labels
             ax.set_yticklabels(ax.get_yticklabels(), fontsize=12)
             ax.set_ylim(0, 1.0)  # Set the y-axis limits for each subplot
@@ -95,7 +95,7 @@ def plot_taxonomic_composition(otu_table_df, tax_table_df, meta_table_df, rank, 
         pivot_df = ps_taxa.pivot(index='Sample', columns=rank, values='Abundance').fillna(0)
         
         # Calculate low abundance taxa per sample and add to pivot_df
-        pivot_df['Low abundance taxa'] = 1 - pivot_df.sum(axis=1)
+        pivot_df['Low abundance taxa (<1%)'] = 1 - pivot_df.sum(axis=1)
         
         # Save pivot_df to a CSV file
         pivot_df.to_csv(os.path.join(output_dir, f'{rank}_pivot_table.tsv'), sep='\t')
@@ -104,7 +104,7 @@ def plot_taxonomic_composition(otu_table_df, tax_table_df, meta_table_df, rank, 
         pivot_df.plot(kind='bar', stacked=True, color=palette, figsize=(20, 10))
         plt.ylabel(f'Relative Abundance ({rank.capitalize()})', fontsize=18)
         plt.xlabel('Sample', fontsize=18)
-        plt.xticks(rotation=30, ha='right', fontsize=16)
+        plt.xticks(rotation=45, ha='right', fontsize=12)
         plt.yticks(fontsize=16)
         plt.legend(title=rank.capitalize(), bbox_to_anchor=(1.05, 1), loc='upper left', title_fontsize='18', fontsize='14')
         plt.title(f'{rank.capitalize()} Stacked Barplot', fontsize=22)
@@ -144,7 +144,7 @@ def plot_alpha_diversity(otu_table_df, output_dir):
     sns.set(style='whitegrid')
 
     # Create a figure with three subplots
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(24, 6))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(30, 6))
 
     # Create a boxplot for each alpha diversity metric with standard error bars
     metrics = ['Observed', 'Chao1', 'Shannon']
@@ -252,7 +252,7 @@ def plot_cluster_dendrogram(otu_table_df, meta_table_df, output_dir, groupby):
     dendrogram(linked, labels=labels, orientation='top')
     plt.title('Hierarchical Clustering Dendrogram')
     plt.xlabel('Samples')
-    plt.xticks(rotation=90)
+    plt.xticks(rotation=90, fontsize=12)
     plt.ylabel('Distance')
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "cluster_dendrogram.svg"))
