@@ -7,10 +7,14 @@ args <- commandArgs(TRUE)  # Get input arguments from command line
 # PACKAGE DEPENDENCIES
 # ---------------------------
 required_packages <- c('dplyr', 'tidyr', 'openxlsx', 'readxl', 'data.table', 
-                      'stringr', 'Biostrings', 'taxizedb', 'ggplot2')
+                      'stringr', 'taxizedb', 'ggplot2')
 sapply(required_packages, require, character.only = TRUE)
-rm(required_packages)  # Clean up
 
+# Load Biostrings explicitly
+library(Biostrings)
+
+# Clean up
+rm(required_packages)
 # ---------------------------
 # DATA PRE-PROCESSING
 # ---------------------------
